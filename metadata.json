@@ -1,0 +1,7 @@
+{
+  "name": "Design Mahal - Premium Graphic Design Portfolio",
+  "description": "প্রিমিয়াম গ্রাফিক ডিজাইন পোর্টফোলিও, সার্ভিস শোকেস এবং সরাসরি অর্ডার ও অ্যাডমিন ম্যানেজমেন্ট প্ল্যাটফর্ম।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

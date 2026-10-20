@@ -1,0 +1,476 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Poppins', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-brand: 'Poppins', sans-serif;
+  --font-display: 'Poppins', sans-serif;
+}
+
+@layer base {
+  :root {
+    --font-brand: 'Poppins', sans-serif;
+    --font-bengali: 'Hind Siliguri', 'Poppins', sans-serif;
+  }
+
+  *, ::before, ::after {
+    font-family: 'Poppins', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  html {
+    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    background-color: #080d1a;
+    color: #f1f5f9;
+  }
+
+  body {
+    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    background-color: #080d1a;
+    color: #f1f5f9;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-brand {
+    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  button, input, textarea, select {
+    font-family: 'Poppins', 'Hind Siliguri', sans-serif;
+  }
+}
+
+/* Custom Blue Gradient & Glow effects over Navy (Replaced Gold with Vibrant Blue) */
+.blue-text-gradient,
+.gold-text-gradient {
+  background: linear-gradient(135deg, #bfdbfe 0%, #60a5fa 35%, #3b82f6 70%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.navy-gold-glow,
+.navy-blue-glow {
+  box-shadow: 0 0 35px -5px rgba(37, 99, 235, 0.4), 0 0 15px -3px rgba(96, 165, 250, 0.25);
+}
+
+.luxury-card-glow {
+  box-shadow: 0 10px 30px -10px rgba(8, 13, 26, 0.7), 0 0 20px -5px rgba(37, 99, 235, 0.15);
+}
+
+.luxury-card-glow:hover {
+  box-shadow: 0 15px 35px -10px rgba(8, 13, 26, 0.9), 0 0 30px -3px rgba(59, 130, 246, 0.35);
+}
+
+/* Rotating Neon Light Orbit for Icons */
+@keyframes light-orbit-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.icon-light-orbit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 18px -2px rgba(56, 189, 248, 0.4), 0 0 8px rgba(37, 99, 235, 0.3);
+  transition: all 0.3s ease;
+  background: #080d1a;
+}
+
+.icon-light-orbit:hover {
+  box-shadow: 0 0 30px 2px rgba(56, 189, 248, 0.75), 0 0 15px rgba(96, 165, 250, 0.5);
+  transform: translateY(-2px) scale(1.05);
+}
+
+.icon-light-orbit::before {
+  content: '';
+  position: absolute;
+  top: -65%;
+  left: -65%;
+  width: 230%;
+  height: 230%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 60deg,
+    rgba(56, 189, 248, 0.15) 100deg,
+    rgba(56, 189, 248, 0.8) 140deg,
+    #60a5fa 165deg,
+    #ffffff 180deg,
+    #38bdf8 195deg,
+    rgba(37, 99, 235, 0.8) 220deg,
+    transparent 260deg,
+    transparent 360deg
+  );
+  animation: light-orbit-spin 2.6s linear infinite;
+  pointer-events: none;
+}
+
+.icon-light-orbit-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background-color: #0c1428;
+  transition: all 0.25s ease;
+}
+
+/* Green variant for WhatsApp */
+.icon-light-orbit-green {
+  box-shadow: 0 0 18px -2px rgba(37, 211, 102, 0.4), 0 0 8px rgba(37, 211, 102, 0.2);
+}
+.icon-light-orbit-green:hover {
+  box-shadow: 0 0 28px 2px rgba(37, 211, 102, 0.7), 0 0 14px rgba(37, 211, 102, 0.4);
+}
+.icon-light-orbit-green::before {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 60deg,
+    rgba(37, 211, 102, 0.15) 100deg,
+    rgba(37, 211, 102, 0.8) 140deg,
+    #4ade80 165deg,
+    #ffffff 180deg,
+    #22c55e 195deg,
+    rgba(22, 163, 74, 0.8) 220deg,
+    transparent 260deg,
+    transparent 360deg
+  );
+}
+
+/* Ambient under-light glow for cards & icons */
+.icon-underlight-glow {
+  position: relative;
+}
+.icon-underlight-glow::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 8px;
+  background: radial-gradient(ellipse at center, rgba(56, 189, 248, 0.8) 0%, rgba(37, 99, 235, 0.4) 50%, transparent 80%);
+  filter: blur(4px);
+  pointer-events: none;
+  border-radius: 9999px;
+  animation: pulse-glow 2.5s ease-in-out infinite alternate;
+}
+
+/* Small Rotating Light Orbit for Buttons and Badges */
+.icon-light-sm {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5px;
+  border-radius: 9px;
+  overflow: hidden;
+  box-shadow: 0 0 12px -1px rgba(56, 189, 248, 0.5), 0 0 6px rgba(37, 99, 235, 0.3);
+  transition: all 0.25s ease;
+  background: #080d1a;
+}
+.icon-light-sm::before {
+  content: '';
+  position: absolute;
+  top: -65%;
+  left: -65%;
+  width: 230%;
+  height: 230%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 60deg,
+    rgba(56, 189, 248, 0.3) 100deg,
+    rgba(56, 189, 248, 0.9) 140deg,
+    #ffffff 180deg,
+    rgba(37, 99, 235, 0.9) 220deg,
+    transparent 260deg,
+    transparent 360deg
+  );
+  animation: light-orbit-spin 2s linear infinite;
+  pointer-events: none;
+}
+.icon-light-sm-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background-color: #0c1428;
+}
+
+/* Brand Logo Neon Light Orbit */
+.logo-light-orbit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 20px -2px rgba(56, 189, 248, 0.6), 0 0 10px rgba(37, 99, 235, 0.4);
+  transition: all 0.3s ease;
+  background: #080d1a;
+}
+.logo-light-orbit:hover {
+  box-shadow: 0 0 28px 2px rgba(56, 189, 248, 0.85), 0 0 15px rgba(96, 165, 250, 0.6);
+  transform: scale(1.05);
+}
+.logo-light-orbit::before {
+  content: '';
+  position: absolute;
+  top: -65%;
+  left: -65%;
+  width: 230%;
+  height: 230%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 50deg,
+    rgba(56, 189, 248, 0.2) 90deg,
+    rgba(56, 189, 248, 0.9) 140deg,
+    #ffffff 180deg,
+    #60a5fa 195deg,
+    rgba(37, 99, 235, 0.9) 220deg,
+    transparent 260deg,
+    transparent 360deg
+  );
+  animation: light-orbit-spin 2.4s linear infinite;
+  pointer-events: none;
+}
+.logo-light-orbit-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  background-color: #080d1a;
+  overflow: hidden;
+}
+
+/* Circular Designer Avatar Neon Light Orbit */
+.avatar-light-orbit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border-radius: 9999px;
+  overflow: hidden;
+  box-shadow: 0 0 26px -2px rgba(56, 189, 248, 0.65), 0 0 12px rgba(37, 99, 235, 0.45);
+  transition: all 0.3s ease;
+  background: #080d1a;
+}
+.avatar-light-orbit:hover {
+  box-shadow: 0 0 36px 4px rgba(56, 189, 248, 0.9), 0 0 18px rgba(96, 165, 250, 0.7);
+  transform: scale(1.04);
+}
+.avatar-light-orbit::before {
+  content: '';
+  position: absolute;
+  top: -65%;
+  left: -65%;
+  width: 230%;
+  height: 230%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 45deg,
+    rgba(56, 189, 248, 0.2) 85deg,
+    rgba(56, 189, 248, 0.95) 135deg,
+    #ffffff 180deg,
+    #60a5fa 195deg,
+    rgba(37, 99, 235, 0.95) 225deg,
+    transparent 265deg,
+    transparent 360deg
+  );
+  animation: light-orbit-spin 2.8s linear infinite;
+  pointer-events: none;
+}
+.avatar-light-orbit-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  background-color: #080d1a;
+  overflow: hidden;
+}
+
+/* Adobe Illustrator Orange Neon Orbit */
+.badge-ai-orbit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 18px -1px rgba(255, 154, 0, 0.55), 0 0 8px rgba(245, 158, 11, 0.35);
+  transition: all 0.3s ease;
+  background: #080d1a;
+}
+.badge-ai-orbit:hover {
+  box-shadow: 0 0 26px 3px rgba(255, 154, 0, 0.85), 0 0 14px rgba(251, 191, 36, 0.6);
+  transform: translateY(-3px) scale(1.08);
+}
+.badge-ai-orbit::before {
+  content: '';
+  position: absolute;
+  top: -65%;
+  left: -65%;
+  width: 230%;
+  height: 230%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 50deg,
+    rgba(255, 154, 0, 0.2) 90deg,
+    rgba(255, 154, 0, 0.95) 140deg,
+    #ffffff 180deg,
+    #f59e0b 200deg,
+    rgba(217, 119, 6, 0.9) 230deg,
+    transparent 270deg,
+    transparent 360deg
+  );
+  animation: light-orbit-spin 2.2s linear infinite;
+  pointer-events: none;
+}
+.badge-ai-orbit-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background-color: #0a0f1d;
+}
+
+/* Adobe Photoshop Cyan Neon Orbit */
+.badge-ps-orbit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 18px -1px rgba(49, 168, 255, 0.55), 0 0 8px rgba(14, 165, 233, 0.35);
+  transition: all 0.3s ease;
+  background: #080d1a;
+}
+.badge-ps-orbit:hover {
+  box-shadow: 0 0 26px 3px rgba(49, 168, 255, 0.85), 0 0 14px rgba(56, 189, 248, 0.6);
+  transform: translateY(-3px) scale(1.08);
+}
+.badge-ps-orbit::before {
+  content: '';
+  position: absolute;
+  top: -65%;
+  left: -65%;
+  width: 230%;
+  height: 230%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 50deg,
+    rgba(49, 168, 255, 0.2) 90deg,
+    rgba(49, 168, 255, 0.95) 140deg,
+    #ffffff 180deg,
+    #38bdf8 200deg,
+    rgba(2, 132, 199, 0.9) 230deg,
+    transparent 270deg,
+    transparent 360deg
+  );
+  animation: light-orbit-spin 2.2s linear infinite;
+  pointer-events: none;
+}
+.badge-ps-orbit-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background-color: #0a0f1d;
+}
+
+@keyframes soft-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.animate-soft-float-1 {
+  animation: soft-float 3.5s ease-in-out infinite;
+}
+.animate-soft-float-2 {
+  animation: soft-float 4s ease-in-out infinite 0.8s;
+}
+
+/* Universal Icon Neon Light Glow */
+.icon-glow, svg.lucide {
+  filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.55));
+}
+.icon-glow-intense {
+  filter: drop-shadow(0 0 7px rgba(56, 189, 248, 0.85)) drop-shadow(0 0 2px #ffffff);
+}
+
+@keyframes pulse-glow {
+  0% {
+    opacity: 0.5;
+    transform: translateX(-50%) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.15);
+  }
+}
+
+/* Custom smooth navy scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #080d1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1b2848;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3b82f6;
+}
+
+
+
