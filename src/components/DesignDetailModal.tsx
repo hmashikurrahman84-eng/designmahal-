@@ -4,7 +4,7 @@ import { VectorShowcase } from './VectorShowcase';
 import { X, ArrowRight, Tag, Layers, Check, Calendar, Info, Edit3 } from 'lucide-react';
 
 export const DesignDetailModal: React.FC = () => {
-  const { activeDesignModal, setActiveDesignModal, openOrderWithService, setIsAdminModalOpen } = usePortfolio();
+  const { activeDesignModal, setActiveDesignModal, openOrderWithService, setIsAdminModalOpen, isAdminAuthenticated } = usePortfolio();
 
   // Handle ESC key press to close
   useEffect(() => {
@@ -135,16 +135,18 @@ export const DesignDetailModal: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
 
-            <button
-              onClick={() => {
-                setActiveDesignModal(null);
-                setIsAdminModalOpen(true);
-              }}
-              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-[#94a3b8] hover:text-[#38bdf8] hover:bg-[#121c38] rounded-lg transition-colors cursor-pointer"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>ডিজাইন ম্যানেজ / সম্পাদনা করুন</span>
-            </button>
+            {isAdminAuthenticated && (
+              <button
+                onClick={() => {
+                  setActiveDesignModal(null);
+                  setIsAdminModalOpen(true);
+                }}
+                className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-[#94a3b8] hover:text-[#38bdf8] hover:bg-[#121c38] rounded-lg transition-colors cursor-pointer"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>ডিজাইন ম্যানেজ / সম্পাদনা করুন</span>
+              </button>
+            )}
           </div>
 
         </div>

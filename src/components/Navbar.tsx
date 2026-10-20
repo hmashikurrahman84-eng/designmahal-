@@ -3,7 +3,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { Menu, X, Shield, BookOpen, Sparkles, Send } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { settings, openOrderWithService, setIsAdminModalOpen, setIsGuideModalOpen } = usePortfolio();
+  const { settings, openOrderWithService, setIsAdminModalOpen, setIsGuideModalOpen, isAdminAuthenticated } = usePortfolio();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
@@ -71,12 +71,16 @@ export const Navbar: React.FC = () => {
             </button>
           </div>
 
-          {/* Admin Lock Button with Light Orbit */}
+          {/* Admin Lock / Manage Button with Light Orbit */}
           <div className="icon-underlight-glow">
             <button
               onClick={() => setIsAdminModalOpen(true)}
-              title="অ্যাডমিন প্যানেল"
-              className="p-1.5 text-[#94a3b8] hover:text-[#38bdf8] hover:bg-[#121c38] rounded-md transition-colors border border-[#1b2a4e]/70"
+              title={isAdminAuthenticated ? "অ্যাডমিন প্যানেল (লগইন করা)" : "অ্যাডমিন লগইন"}
+              className={`p-1.5 rounded-md transition-all border cursor-pointer ${
+                isAdminAuthenticated
+                  ? 'text-[#38bdf8] bg-[#121c38] border-[#38bdf8]/60 shadow-sm shadow-[#38bdf8]/30 ring-1 ring-[#38bdf8]/30'
+                  : 'text-[#94a3b8] hover:text-[#38bdf8] hover:bg-[#121c38] border-[#1b2a4e]/70'
+              }`}
             >
               <div className="icon-light-sm w-7 h-7">
                 <div className="icon-light-sm-inner w-full h-full text-[#38bdf8]">
@@ -141,10 +145,14 @@ export const Navbar: React.FC = () => {
                 setMobileMenuOpen(false);
                 setIsAdminModalOpen(true);
               }}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold text-[#cbd5e1] bg-[#101932] border border-[#1e2f57] rounded-md"
+              className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold rounded-md border ${
+                isAdminAuthenticated
+                  ? 'text-[#38bdf8] bg-[#162345] border-[#38bdf8]/40'
+                  : 'text-[#cbd5e1] bg-[#101932] border-[#1e2f57]'
+              }`}
             >
               <Shield className="w-4 h-4 text-[#38bdf8]" />
-              অ্যাডমিন
+              {isAdminAuthenticated ? 'অ্যাডমিন (লগইন)' : 'অ্যাডমিন'}
             </button>
           </div>
         </div>

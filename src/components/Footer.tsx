@@ -3,7 +3,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { Shield, BookOpen, ArrowUp, Facebook, Instagram, Globe } from 'lucide-react';
 
 export const Footer: React.FC = () => {
-  const { settings, setIsAdminModalOpen, setIsGuideModalOpen } = usePortfolio();
+  const { settings, setIsAdminModalOpen, setIsGuideModalOpen, isAdminAuthenticated } = usePortfolio();
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -116,10 +116,14 @@ export const Footer: React.FC = () => {
               </button>
               <button
                 onClick={() => setIsAdminModalOpen(true)}
-                className="w-full inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold text-[#cbd5e1] bg-[#0e162c] hover:bg-[#162345] border border-[#1b2a4e] rounded-lg transition-colors cursor-pointer"
+                className={`w-full inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer border ${
+                  isAdminAuthenticated
+                    ? 'text-[#38bdf8] bg-[#162345] border-[#38bdf8]/40 shadow-sm shadow-[#38bdf8]/20'
+                    : 'text-[#cbd5e1] bg-[#0e162c] hover:bg-[#162345] border-[#1b2a4e]'
+                }`}
               >
                 <Shield className="w-3.5 h-3.5 text-[#38bdf8]" />
-                <span>ডিজাইনার অ্যাডমিন প্যানেল</span>
+                <span>{isAdminAuthenticated ? 'ডিজাইনার অ্যাডমিন প্যানেল (লগইন করা)' : 'ডিজাইনার অ্যাডমিন প্যানেল'}</span>
               </button>
             </div>
           </div>

@@ -54,10 +54,12 @@ export const AdminModal: React.FC = () => {
     importDatabaseJSON,
     resetAllToDefault,
     setIsGuideModalOpen,
+    isAdminAuthenticated,
+    adminLogin,
+    adminLogout,
   } = usePortfolio();
 
-  // Authentication state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Authentication input & error state
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -101,8 +103,7 @@ export const AdminModal: React.FC = () => {
   // Handle Login Check
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === settings.adminPasswordHash || passwordInput === 'mahal2026') {
-      setIsAuthenticated(true);
+    if (adminLogin(passwordInput)) {
       setAuthError(null);
       setPasswordInput('');
     } else {
@@ -300,19 +301,29 @@ export const AdminModal: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {isAdminAuthenticated && (
+              <button
+                onClick={() => adminLogout()}
+                className="px-2.5 py-1 text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-950/40 hover:bg-rose-950/70 rounded-md border border-rose-500/30 flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="অ্যাডমিন প্যানেল থেকে লগআউট"
+              >
+                <Unlock className="w-3.5 h-3.5" />
+                <span>লগআউট</span>
+              </button>
+            )}
             <button
               onClick={() => {
                 setIsAdminModalOpen(false);
                 setIsGuideModalOpen(true);
               }}
-              className="px-2.5 py-1 text-xs font-semibold text-[#38bdf8] bg-[#121c38] hover:bg-[#1a2850] rounded-md border border-[#38bdf8]/30 flex items-center gap-1.5"
+              className="px-2.5 py-1 text-xs font-semibold text-[#38bdf8] bg-[#121c38] hover:bg-[#1a2850] rounded-md border border-[#38bdf8]/30 flex items-center gap-1.5 cursor-pointer"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>গাইড</span>
             </button>
             <button
               onClick={() => setIsAdminModalOpen(false)}
-              className="p-1.5 text-[#94a3b8] hover:text-white bg-[#121c38] rounded-md transition-colors"
+              className="p-1.5 text-[#94a3b8] hover:text-white bg-[#121c38] rounded-md transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -320,7 +331,7 @@ export const AdminModal: React.FC = () => {
         </div>
 
         {/* If NOT Authenticated, show Login Dialog */}
-        {!isAuthenticated ? (
+        {!isAdminAuthenticated ? (
           <div className="flex-1 flex items-center justify-center p-6 bg-[#070c18]">
             <div className="w-full max-w-sm p-8 bg-[#0e162c] border border-[#1b2a4e] rounded-2xl text-center space-y-5">
               <div className="icon-underlight-glow inline-block mx-auto">
@@ -438,8 +449,8 @@ export const AdminModal: React.FC = () => {
 
               <div className="mt-auto hidden md:block pt-4 border-t border-[#162344]">
                 <button
-                  onClick={() => setIsAuthenticated(false)}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-[#64748b] hover:text-red-400 hover:bg-[#121c38] rounded-lg transition-colors"
+                  onClick={() => adminLogout()}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-[#64748b] hover:text-red-400 hover:bg-[#121c38] rounded-lg transition-colors cursor-pointer"
                 >
                   <Unlock className="w-3.5 h-3.5" />
                   <span>লগআউট</span>

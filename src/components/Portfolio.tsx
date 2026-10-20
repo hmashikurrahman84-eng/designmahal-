@@ -18,7 +18,7 @@ const CATEGORIES: ('All' | DesignCategory)[] = [
 ];
 
 export const Portfolio: React.FC = () => {
-  const { designs, setActiveDesignModal, setIsAdminModalOpen } = usePortfolio();
+  const { designs, setActiveDesignModal, setIsAdminModalOpen, isAdminAuthenticated } = usePortfolio();
   const [selectedCategory, setSelectedCategory] = useState<'All' | DesignCategory>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -57,20 +57,23 @@ export const Portfolio: React.FC = () => {
             </p>
           </div>
 
-          {/* Quick Action: Add New Design for Owner with Light Orbit */}
-          <div className="icon-underlight-glow">
-            <button
-              onClick={() => setIsAdminModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-[#38bdf8] bg-[#0e162c] hover:bg-[#162345] border border-[#38bdf8]/30 hover:border-[#38bdf8]/60 rounded-lg transition-colors cursor-pointer"
-            >
-              <div className="icon-light-sm w-4 h-4">
-                <div className="icon-light-sm-inner w-full h-full text-[#38bdf8]">
-                  <Plus className="w-2.5 h-2.5 text-[#38bdf8]" />
+          {/* Quick Action: Add New Design for Owner with Light Orbit - ONLY VISIBLE TO LOGGED IN ADMIN */}
+          {isAdminAuthenticated && (
+            <div className="icon-underlight-glow">
+              <button
+                onClick={() => setIsAdminModalOpen(true)}
+                className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-[#38bdf8] bg-[#0e162c] hover:bg-[#162345] border border-[#38bdf8]/30 hover:border-[#38bdf8]/60 rounded-lg transition-colors cursor-pointer"
+                title="ডিজাইন আপলোড / ম্যানেজ করুন"
+              >
+                <div className="icon-light-sm w-4 h-4">
+                  <div className="icon-light-sm-inner w-full h-full text-[#38bdf8]">
+                    <Plus className="w-2.5 h-2.5 text-[#38bdf8]" />
+                  </div>
                 </div>
-              </div>
-              <span>ডিজাইন ম্যানেজ / নতুন যোগ করুন</span>
-            </button>
-          </div>
+                <span>ডিজাইন ম্যানেজ / নতুন যোগ করুন</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Search & Category Filter Controls */}

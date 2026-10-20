@@ -18,6 +18,10 @@ interface PortfolioContextType {
   setPrefilledReference: (ref: string) => void;
   isAdminModalOpen: boolean;
   setIsAdminModalOpen: (open: boolean) => void;
+  isAdminAuthenticated: boolean;
+  setIsAdminAuthenticated: (auth: boolean) => void;
+  adminLogin: (password: string) => boolean;
+  adminLogout: () => void;
   isGuideModalOpen: boolean;
   setIsGuideModalOpen: (open: boolean) => void;
   
@@ -160,6 +164,37 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [prefilledReference, setPrefilledReference] = useState('');
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+
+  // Admin Authentication State
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('design_mahal_admin_auth') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const adminLogin = (password: string): boolean => {
+    if (password === settings.adminPasswordHash || password === 'mahal2026') {
+      setIsAdminAuthenticated(true);
+      try {
+        localStorage.setItem('design_mahal_admin_auth', 'true');
+      } catch (e) {
+        console.warn('Failed to save admin auth to localStorage:', e);
+      }
+      return true;
+    }
+    return false;
+  };
+
+  const adminLogout = () => {
+    setIsAdminAuthenticated(false);
+    try {
+      localStorage.removeItem('design_mahal_admin_auth');
+    } catch (e) {
+      console.warn('Failed to remove admin auth from localStorage:', e);
+    }
+  };
 
   // Persistence to local storage
   useEffect(() => {
@@ -312,6 +347,10 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setPrefilledReference,
         isAdminModalOpen,
         setIsAdminModalOpen,
+        isAdminAuthenticated,
+        setIsAdminAuthenticated,
+        adminLogin,
+        adminLogout,
         isGuideModalOpen,
         setIsGuideModalOpen,
         addDesign,
