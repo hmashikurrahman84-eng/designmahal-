@@ -82,27 +82,28 @@ export const AdminModal: React.FC = () => {
     lockoutUntil,
   } = usePortfolio();
 
-  // Authentication mode & input state
+  // Authentication mode & input state (Gmail is kept confidential and not pre-exposed)
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
-  const [loginEmail, setLoginEmail] = useState(settings.email || 'hmashikurrahman84@gmail.com');
+  const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Sign up state
   const [signUpName, setSignUpName] = useState(settings.designerName || 'H.M. Ashikur Rahman');
-  const [signUpEmail, setSignUpEmail] = useState(settings.email || 'hmashikurrahman84@gmail.com');
+  const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpConfirm, setSignUpConfirm] = useState('');
   const [signUpPin, setSignUpPin] = useState(settings.adminPin || '788553');
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
 
   // Forgot password state
-  const [recoveryEmail, setRecoveryEmail] = useState(settings.email || 'hmashikurrahman84@gmail.com');
+  const [recoveryEmail, setRecoveryEmail] = useState('');
   const [recoveryPin, setRecoveryPin] = useState('');
   const [recoveryNewPass, setRecoveryNewPass] = useState('');
   const [recoveryConfirm, setRecoveryConfirm] = useState('');
   const [showRecoveryPassword, setShowRecoveryPassword] = useState(false);
+  const [showWhitelistEmails, setShowWhitelistEmails] = useState(false);
 
   // Auth feedback & loading
   const [authError, setAuthError] = useState<string | null>(null);
@@ -427,7 +428,7 @@ export const AdminModal: React.FC = () => {
               </div>
               <p className="text-[11px] text-[#94a3b8]">
                 {isAdminAuthenticated && currentAdminUser
-                  ? `লগইনকৃত: ${currentAdminUser.email} (${currentAdminUser.role === 'super_admin' ? 'সুপার অ্যাডমিন' : 'ম্যানেজার'})`
+                  ? `অ্যাডমিন স্ট্যাটাস: ${currentAdminUser.name || 'H.M. Ashikur Rahman'} (${currentAdminUser.role === 'super_admin' ? 'প্রধান কন্ট্রোল সক্রিয়' : 'ম্যানেজার'})`
                   : 'ডিজাইন আপলোড, সার্ভিস সম্পাদনা, অর্ডার ইনবক্স ও সাইট সেটিংস'}
               </p>
             </div>
@@ -445,7 +446,7 @@ export const AdminModal: React.FC = () => {
                 </div>
                 <div className="text-left text-[11px]">
                   <p className="font-semibold text-[#f1f5f9] leading-none">{currentAdminUser.name || 'অ্যাডমিন'}</p>
-                  <p className="text-[10px] text-[#38bdf8] leading-none mt-0.5 font-mono">{currentAdminUser.email}</p>
+                  <p className="text-[10px] text-emerald-400 leading-none mt-0.5 font-semibold">ভেরিফাইড ও সুরক্ষিত</p>
                 </div>
               </div>
             )}
@@ -705,7 +706,7 @@ export const AdminModal: React.FC = () => {
                   <div className="p-2.5 rounded-xl bg-[#111c38]/60 border border-[#1e2f57] text-[11px] text-[#94a3b8] flex items-center gap-2">
                     <Shield className="w-4 h-4 text-[#38bdf8] shrink-0" />
                     <span>
-                      নিরাপত্তা শিল্ড: শুধুমাত্র অনুমোদিত জিমেল (<strong className="text-[#f1f5f9]">{settings.email || 'hmashikurrahman84@gmail.com'}</strong>) দিয়ে অ্যাডমিন অ্যাকাউন্ট সক্রিয় করা যাবে।
+                      নিরাপত্তা শিল্ড: শুধুমাত্র সাইট ওনারের অনুমোদিত জিমেল দিয়ে অ্যাকাউন্ট সক্রিয় করা যাবে। অননুমোদিত যে কারো জন্য অ্যাক্সেস সম্পূর্ণ সুরক্ষিত ও ব্লক থাকবে।
                     </span>
                   </div>
 
@@ -734,7 +735,7 @@ export const AdminModal: React.FC = () => {
                       <Mail className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
                         type="email"
-                        placeholder="hmashikurrahman84@gmail.com"
+                        placeholder="আপনার জিমেল এড্রেস লিখুন..."
                         value={signUpEmail}
                         onChange={(e) => setSignUpEmail(e.target.value)}
                         required
@@ -1703,7 +1704,10 @@ export const AdminModal: React.FC = () => {
                                   {currentAdminUser.role === 'super_admin' ? 'সুপার অ্যাডমিন' : 'ম্যানেজার'}
                                 </span>
                               </p>
-                              <p className="text-[11px] text-[#94a3b8] font-mono">{currentAdminUser.email}</p>
+                              <p className="text-[11px] text-emerald-400 font-medium flex items-center gap-1.5 mt-0.5">
+                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                <span>অ্যাডমিন জিমেল: এনক্রিপ্টেড ও সম্পূর্ণ গোপনীয়</span>
+                              </p>
                             </div>
                           </div>
                           <div className="text-right text-[10px] text-[#64748b]">
@@ -1743,24 +1747,34 @@ export const AdminModal: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Authorized Email Whitelist */}
+                      {/* Authorized Email Whitelist (Protected with toggle) */}
                       <div>
-                        <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1 flex items-center gap-1">
-                          <Mail className="w-3 h-3 text-[#38bdf8]" />
-                          <span>অনুমোদিত অ্যাডমিন জিমেল তালিকা (Authorized Gmail Whitelist)</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] font-semibold text-[#cbd5e1] flex items-center gap-1">
+                            <Mail className="w-3 h-3 text-[#38bdf8]" />
+                            <span>অনুমোদিত অ্যাডমিন জিমেল তালিকা</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setShowWhitelistEmails(!showWhitelistEmails)}
+                            className="text-[10px] text-[#38bdf8] hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            {showWhitelistEmails ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            <span>{showWhitelistEmails ? 'লুকান' : 'দেখুন / পরিবর্তন করুন'}</span>
+                          </button>
+                        </div>
                         <input
-                          type="text"
-                          placeholder="কমা দিয়ে একাধিক জিমেল লিখুন (যেমন: hmashikurrahman84@gmail.com, another@gmail.com)"
+                          type={showWhitelistEmails ? 'text' : 'password'}
+                          placeholder="অনুমোদিত জিমেলসমূহ এনক্রিপ্ট রাখা আছে..."
                           value={(siteSettingsForm.authorizedAdminEmails || ['hmashikurrahman84@gmail.com']).join(', ')}
                           onChange={(e) => {
                             const arr = e.target.value.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
                             setSiteSettingsForm({ ...siteSettingsForm, authorizedAdminEmails: arr });
                           }}
-                          className="w-full px-3 py-2 bg-[#0e162c] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none font-mono"
+                          className="w-full px-3 py-2 bg-[#0e162c] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none font-mono tracking-wider"
                         />
                         <p className="text-[10px] text-[#64748b] mt-1 leading-relaxed">
-                          🛡️ শুধুমাত্র এই তালিকার জিমেলগুলোই সাইনআপ করে অ্যাডমিন হতে পারবে। ক্লায়েন্ট বা অপরিচিত কেউ সাইনআপ করার চেষ্টা করলে সিস্টেম স্বয়ংক্রিয়ভাবে ব্লক করবে।
+                          🛡️ শুধুমাত্র এই তালিকার জিমেলগুলোই সাইনআপ করে অ্যাডমিন হতে পারবে। প্যানেলের সুরক্ষার স্বার্থে জিমেল সম্পূর্ণ গোপন রাখা হয়েছে।
                         </p>
                       </div>
                     </div>

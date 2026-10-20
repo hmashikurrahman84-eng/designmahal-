@@ -14,28 +14,14 @@ export const Navbar: React.FC = () => {
     { label: 'যোগাযোগ', href: '#contact' },
   ];
 
-  const [logoClickCount, setLogoClickCount] = useState(0);
-
-  const handleLogoSecretClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const nextCount = logoClickCount + 1;
-    setLogoClickCount(nextCount);
-    if (nextCount >= 3) {
-      setLogoClickCount(0);
-      setIsAdminModalOpen(true);
-    } else {
-      setTimeout(() => setLogoClickCount(0), 1800);
-    }
-  };
-
   return (
     <header className="sticky top-0 z-40 w-full bg-[#080d1a]/95 backdrop-blur-md border-b border-[#162344] transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-8">
-        {/* Zone 1: Brand Wordmark with Official Logo and Light Orbit (Secret Triple-click to open admin) */}
-        <div 
-          onClick={handleLogoSecretClick}
-          className="flex items-center gap-3 shrink-0 group cursor-pointer select-none"
-          title={isAdminAuthenticated ? "Design Mahal (অ্যাডমিন সক্রিয়)" : settings.brandName}
+        {/* Zone 1: Brand Wordmark with Official Logo and Light Orbit */}
+        <a 
+          href="#home"
+          className="flex items-center gap-3 shrink-0 group select-none cursor-pointer"
+          title={settings.brandName}
         >
           <div className="icon-underlight-glow">
             <div className="logo-light-orbit w-11 h-11 shrink-0">
@@ -56,7 +42,7 @@ export const Navbar: React.FC = () => {
               Creative Studio
             </span>
           </div>
-        </div>
+        </a>
 
         {/* Zone 2: 4–5 single-line clean nav links */}
         <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-[#94a3b8]">

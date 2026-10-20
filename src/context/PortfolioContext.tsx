@@ -305,7 +305,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
       return {
         success: false,
-        error: `এই জিমেল (${cleanEmail}) কোনো অ্যাডমিন একাউন্টে নিবন্ধিত নয়! নতুন হলে দয়া করে পাশের 'সাইনআপ' ট্যাবে গিয়ে অ্যাকাউন্ট তৈরি করুন।`,
+        error: 'প্রদত্ত জিমেলটি কোনো অ্যাডমিন একাউন্টে নিবন্ধিত নয়! নতুন হলে দয়া করে পাশের সাইনআপ ট্যাবে গিয়ে অ্যাকাউন্ট তৈরি করুন।',
       };
     }
 
@@ -406,7 +406,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!isAuthorized) {
       return {
         success: false,
-        error: `অননুমোদিত জিমেল! এই পোর্টফোলিও সাইটের অ্যাডমিন নিয়ন্ত্রণ শুধুমাত্র অনুমোদিত জিমেল (${settings.email || 'hmashikurrahman84@gmail.com'}) এর জন্য সংরক্ষিত। যাকে লিংক দেওয়া হবে সে সাইনআপ করে কন্ট্রোল নিতে পারবে না।`,
+        error: 'অননুমোদিত জিমেল! এই পোর্টফোলিও সাইটের অ্যাডমিন নিয়ন্ত্রণ শুধুমাত্র সাইট ওনারের জন্য সংরক্ষিত। যাকে লিংক দেওয়া হবে সে সাইনআপ করে কন্ট্রোল নিতে পারবে না।',
       };
     }
 
@@ -483,7 +483,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
     return {
       success: true,
-      message: `Google অথেনটিকেশন সফল! স্বাগতম ${user.name} (${user.email})।`,
+      message: `Google অথেনটিকেশন সফল! স্বাগতম ${user.name}।`,
     };
   };
 
