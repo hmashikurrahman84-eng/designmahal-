@@ -19,6 +19,20 @@ import {
   MessageSquare,
   Key,
   BookOpen,
+  Mail,
+  User,
+  Eye,
+  EyeOff,
+  KeyRound,
+  AlertTriangle,
+  ShieldCheck,
+  RefreshCw,
+  UserPlus,
+  LogIn,
+  ExternalLink,
+  Sparkles,
+  Check,
+  ChevronRight,
 } from 'lucide-react';
 
 const CATEGORIES: DesignCategory[] = [
@@ -55,13 +69,45 @@ export const AdminModal: React.FC = () => {
     resetAllToDefault,
     setIsGuideModalOpen,
     isAdminAuthenticated,
+    currentAdminUser,
+    adminUsers,
+    loginWithGmail,
+    signUpWithGmail,
+    googleOneClickLogin,
+    resetAdminPasswordWithPin,
+    updateAdminProfile,
     adminLogin,
     adminLogout,
+    failedLoginAttempts,
+    lockoutUntil,
   } = usePortfolio();
 
-  // Authentication input & error state
-  const [passwordInput, setPasswordInput] = useState('');
+  // Authentication mode & input state
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login');
+  const [loginEmail, setLoginEmail] = useState(settings.email || 'hmashikurrahman84@gmail.com');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+
+  // Sign up state
+  const [signUpName, setSignUpName] = useState(settings.designerName || 'H.M. Ashikur Rahman');
+  const [signUpEmail, setSignUpEmail] = useState(settings.email || 'hmashikurrahman84@gmail.com');
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [signUpConfirm, setSignUpConfirm] = useState('');
+  const [signUpPin, setSignUpPin] = useState(settings.adminPin || '788553');
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+
+  // Forgot password state
+  const [recoveryEmail, setRecoveryEmail] = useState(settings.email || 'hmashikurrahman84@gmail.com');
+  const [recoveryPin, setRecoveryPin] = useState('');
+  const [recoveryNewPass, setRecoveryNewPass] = useState('');
+  const [recoveryConfirm, setRecoveryConfirm] = useState('');
+  const [showRecoveryPassword, setShowRecoveryPassword] = useState(false);
+
+  // Auth feedback & loading
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   // Active Admin Tab
   const [activeTab, setActiveTab] = useState<'designs' | 'services' | 'orders' | 'settings' | 'backup'>('designs');
@@ -100,15 +146,92 @@ export const AdminModal: React.FC = () => {
 
   if (!isAdminModalOpen) return null;
 
-  // Handle Login Check
-  const handleLogin = (e: React.FormEvent) => {
+  // Handle Gmail & Password Login
+  const handleGmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminLogin(passwordInput)) {
-      setAuthError(null);
-      setPasswordInput('');
-    } else {
-      setAuthError('ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ড দিন।');
+    setAuthError(null);
+    setAuthSuccess(null);
+    setIsAuthLoading(true);
+
+    setTimeout(() => {
+      const res = loginWithGmail(loginEmail, loginPassword, rememberMe);
+      setIsAuthLoading(false);
+      if (res.success) {
+        setAuthSuccess(res.message || 'সফলভাবে প্রবেশ করেছেন!');
+        setLoginPassword('');
+      } else {
+        setAuthError(res.error || 'লগইন ব্যর্থ হয়েছে।');
+      }
+    }, 200);
+  };
+
+  // Handle Gmail Sign Up
+  const handleGmailSignUp = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthSuccess(null);
+
+    if (signUpPassword !== signUpConfirm) {
+      setAuthError('উভয় ঘরে পাসওয়ার্ড একই হতে হবে!');
+      return;
     }
+
+    setIsAuthLoading(true);
+    setTimeout(() => {
+      const res = signUpWithGmail(signUpName, signUpEmail, signUpPassword, signUpPin);
+      setIsAuthLoading(false);
+      if (res.success) {
+        setAuthSuccess(res.message || 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!');
+        setSignUpPassword('');
+        setSignUpConfirm('');
+      } else {
+        setAuthError(res.error || 'সাইনআপ ব্যর্থ হয়েছে।');
+      }
+    }, 250);
+  };
+
+  // Handle Google / Gmail One-Click Quick Login
+  const handleGoogleQuickLogin = () => {
+    setAuthError(null);
+    setAuthSuccess(null);
+    setIsAuthLoading(true);
+
+    setTimeout(() => {
+      const res = googleOneClickLogin(settings.email || 'hmashikurrahman84@gmail.com');
+      setIsAuthLoading(false);
+      if (res.success) {
+        setAuthSuccess(res.message || 'Google অথেনটিকেশন সফল!');
+      } else {
+        setAuthError(res.error || 'Google অথেনটিকেশন ব্যর্থ হয়েছে।');
+      }
+    }, 300);
+  };
+
+  // Handle Password Recovery with 6-Digit PIN
+  const handlePasswordRecovery = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthSuccess(null);
+
+    if (recoveryNewPass !== recoveryConfirm) {
+      setAuthError('নতুন পাসওয়ার্ড নিশ্চিতকরণের সাথে মিলছে না!');
+      return;
+    }
+
+    setIsAuthLoading(true);
+    setTimeout(() => {
+      const res = resetAdminPasswordWithPin(recoveryEmail, recoveryPin, recoveryNewPass);
+      setIsAuthLoading(false);
+      if (res.success) {
+        setAuthSuccess(res.message || 'পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!');
+        setRecoveryPin('');
+        setRecoveryNewPass('');
+        setRecoveryConfirm('');
+        setTimeout(() => setAuthMode('login'), 1200);
+      } else {
+        setAuthError(res.error || 'পাসওয়ার্ড পরিবর্তন ব্যর্থ হয়েছে।');
+      }
+    }, 250);
   };
 
   // Handle Design Image Upload
@@ -277,7 +400,7 @@ export const AdminModal: React.FC = () => {
       <div className="relative w-full max-w-5xl h-[92vh] flex flex-col bg-[#0b1224] border border-[#1b2a4e] rounded-2xl shadow-2xl z-10 overflow-hidden">
         
         {/* Top Header */}
-        <div className="px-6 py-4 bg-[#0e162c] border-b border-[#162344] flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-3.5 bg-[#0e162c] border-b border-[#162344] flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="icon-underlight-glow">
               <div className="logo-light-orbit w-9 h-9 shrink-0">
@@ -291,24 +414,50 @@ export const AdminModal: React.FC = () => {
               </div>
             </div>
             <div>
-              <h3 className="font-sans text-base sm:text-lg font-bold text-[#f1f5f9] flex items-center gap-2">
-                Design Mahal — অ্যাডমিন কন্ট্রোল প্যানেল
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-sans text-sm sm:text-base font-bold text-[#f1f5f9]">
+                  Design Mahal — অ্যাডমিন কন্ট্রোল প্যানেল
+                </h3>
+                {isAdminAuthenticated && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-500/40">
+                    <ShieldCheck className="w-3 h-3" />
+                    <span>সক্রিয় ও সুরক্ষিত</span>
+                  </span>
+                )}
+              </div>
               <p className="text-[11px] text-[#94a3b8]">
-                ডিজাইন আপলোড, সার্ভিস সম্পাদনা, অর্ডার ইনবক্স ও সাইট সেটিংস
+                {isAdminAuthenticated && currentAdminUser
+                  ? `লগইনকৃত: ${currentAdminUser.email} (${currentAdminUser.role === 'super_admin' ? 'সুপার অ্যাডমিন' : 'ম্যানেজার'})`
+                  : 'ডিজাইন আপলোড, সার্ভিস সম্পাদনা, অর্ডার ইনবক্স ও সাইট সেটিংস'}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {isAdminAuthenticated && currentAdminUser && (
+              <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#080d1a] border border-[#1e2f57]">
+                <div className="w-6 h-6 rounded-full overflow-hidden border border-[#38bdf8]/40 bg-[#162344] shrink-0">
+                  <img
+                    src={currentAdminUser.avatarUrl || settings.designerPhotoUrl || 'https://res.cloudinary.com/fht84r3o/image/upload/v1792481081/%E0%A7%A7%E0%A7%A7.jpg'}
+                    alt="Admin"
+                    className="w-full h-full object-cover object-top"
+                  />
+                </div>
+                <div className="text-left text-[11px]">
+                  <p className="font-semibold text-[#f1f5f9] leading-none">{currentAdminUser.name || 'অ্যাডমিন'}</p>
+                  <p className="text-[10px] text-[#38bdf8] leading-none mt-0.5 font-mono">{currentAdminUser.email}</p>
+                </div>
+              </div>
+            )}
+
             {isAdminAuthenticated && (
               <button
                 onClick={() => adminLogout()}
-                className="px-2.5 py-1 text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-950/40 hover:bg-rose-950/70 rounded-md border border-rose-500/30 flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-2.5 py-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 bg-rose-950/40 hover:bg-rose-950/70 rounded-md border border-rose-500/30 flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="অ্যাডমিন প্যানেল থেকে লগআউট"
               >
                 <Unlock className="w-3.5 h-3.5" />
-                <span>লগআউট</span>
+                <span className="hidden sm:inline">লগআউট</span>
               </button>
             )}
             <button
@@ -316,7 +465,7 @@ export const AdminModal: React.FC = () => {
                 setIsAdminModalOpen(false);
                 setIsGuideModalOpen(true);
               }}
-              className="px-2.5 py-1 text-xs font-semibold text-[#38bdf8] bg-[#121c38] hover:bg-[#1a2850] rounded-md border border-[#38bdf8]/30 flex items-center gap-1.5 cursor-pointer"
+              className="px-2.5 py-1.5 text-xs font-semibold text-[#38bdf8] bg-[#121c38] hover:bg-[#1a2850] rounded-md border border-[#38bdf8]/30 flex items-center gap-1.5 cursor-pointer"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>গাইড</span>
@@ -330,55 +479,459 @@ export const AdminModal: React.FC = () => {
           </div>
         </div>
 
-        {/* If NOT Authenticated, show Login Dialog */}
+        {/* If NOT Authenticated, show Gmail Authentication & Signup Suite */}
         {!isAdminAuthenticated ? (
-          <div className="flex-1 flex items-center justify-center p-6 bg-[#070c18]">
-            <div className="w-full max-w-sm p-8 bg-[#0e162c] border border-[#1b2a4e] rounded-2xl text-center space-y-5">
-              <div className="icon-underlight-glow inline-block mx-auto">
-                <div className="logo-light-orbit w-16 h-16 shrink-0">
-                  <div className="logo-light-orbit-inner w-full h-full p-2 bg-[#080d1a]">
-                    <img
-                      src={settings.logoUrl || 'https://res.cloudinary.com/fht84r3o/image/upload/v1792477511/Design-Mahal-logo-122.png'}
-                      alt="Design Mahal"
-                      className="w-full h-full object-contain"
-                    />
+          <div className="flex-1 overflow-y-auto flex items-center justify-center p-4 sm:p-6 bg-[#070c18]">
+            <div className="w-full max-w-md p-6 sm:p-8 bg-[#0e162c] border border-[#1b2a4e] rounded-2xl shadow-2xl space-y-5">
+              
+              {/* Logo & Header */}
+              <div className="text-center space-y-2">
+                <div className="icon-underlight-glow inline-block mx-auto">
+                  <div className="logo-light-orbit w-14 h-14 shrink-0">
+                    <div className="logo-light-orbit-inner w-full h-full p-2 bg-[#080d1a]">
+                      <img
+                        src={settings.logoUrl || 'https://res.cloudinary.com/fht84r3o/image/upload/v1792477511/Design-Mahal-logo-122.png'}
+                        alt="Design Mahal"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div>
-                <h4 className="font-sans text-xl font-bold text-[#f1f5f9]">অ্যাডমিন লগইন</h4>
-                <p className="text-xs text-[#94a3b8] mt-1">
-                  পোর্টফোলিও ও অর্ডার পরিচালনা করতে আপনার পাসওয়ার্ড দিন।
-                </p>
+                <div>
+                  <h4 className="font-sans text-xl font-bold text-[#f1f5f9]">অ্যাডমিন অ্যাক্সেস পোর্টাল</h4>
+                  <p className="text-xs text-[#94a3b8] mt-0.5">
+                    শুধুমাত্র অনুমোদিত জিমেল দিয়ে লগইন বা সাইনআপ করে প্রবেশ করুন
+                  </p>
+                </div>
               </div>
 
+              {/* Mode Switcher Tabs */}
+              <div className="grid grid-cols-3 p-1 bg-[#080d1a] border border-[#1e2f57] rounded-xl text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('login');
+                    setAuthError(null);
+                    setAuthSuccess(null);
+                  }}
+                  className={`py-2 px-1 rounded-lg text-center transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    authMode === 'login'
+                      ? 'bg-[#2563eb] text-white shadow-md'
+                      : 'text-[#94a3b8] hover:text-[#f1f5f9]'
+                  }`}
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>লগইন</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('signup');
+                    setAuthError(null);
+                    setAuthSuccess(null);
+                  }}
+                  className={`py-2 px-1 rounded-lg text-center transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    authMode === 'signup'
+                      ? 'bg-[#2563eb] text-white shadow-md'
+                      : 'text-[#94a3b8] hover:text-[#f1f5f9]'
+                  }`}
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>সাইনআপ</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('forgot');
+                    setAuthError(null);
+                    setAuthSuccess(null);
+                  }}
+                  className={`py-2 px-1 rounded-lg text-center transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    authMode === 'forgot'
+                      ? 'bg-[#2563eb] text-white shadow-md'
+                      : 'text-[#94a3b8] hover:text-[#f1f5f9]'
+                  }`}
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>রিকভারি</span>
+                </button>
+              </div>
+
+              {/* Feedback messages */}
               {authError && (
-                <div className="p-3 text-xs bg-red-950/40 border border-red-500/30 text-red-300 rounded-lg">
-                  {authError}
+                <div className="p-3 text-xs bg-red-950/50 border border-red-500/40 text-red-200 rounded-xl flex items-start gap-2 animate-shake">
+                  <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                  <div className="flex-1 leading-relaxed">{authError}</div>
                 </div>
               )}
 
-              <form onSubmit={handleLogin} className="space-y-4">
-                <input
-                  type="password"
-                  placeholder="অ্যাডমিন পাসওয়ার্ড লিখুন..."
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-sm text-[#f1f5f9] rounded-lg outline-none text-center tracking-widest"
-                  autoFocus
-                />
+              {authSuccess && (
+                <div className="p-3 text-xs bg-emerald-950/50 border border-emerald-500/40 text-emerald-200 rounded-xl flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <div className="flex-1 leading-relaxed">{authSuccess}</div>
+                </div>
+              )}
 
+              {/* Google One-Click Direct Sign In */}
+              <div className="space-y-2">
                 <button
-                  type="submit"
-                  className="w-full py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#2563eb] to-[#3b82f6] hover:from-[#1d4ed8] hover:to-[#2563eb] rounded-lg cursor-pointer transition-all shadow-md"
+                  type="button"
+                  onClick={handleGoogleQuickLogin}
+                  disabled={isAuthLoading}
+                  className="w-full py-2.5 px-3 bg-[#080d1a] hover:bg-[#121c38] border border-[#1e2f57] hover:border-[#38bdf8]/50 text-xs font-semibold text-[#f1f5f9] rounded-xl flex items-center justify-center gap-2.5 transition-all shadow-sm cursor-pointer group"
                 >
-                  লগইন করুন
+                  {/* Google Icon SVG */}
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
+                  </svg>
+                  <span>Google একাউন্ট দিয়ে এক ক্লিকে প্রবেশ</span>
                 </button>
-              </form>
 
-              <div className="p-2.5 rounded bg-[#101932] border border-[#1e2f57] text-[11px] text-[#94a3b8] text-center">
-                🔒 এই কন্ট্রোল প্যানেলটি শুধুমাত্র অ্যাডমিনের ব্যবহারের জন্য সংরক্ষিত।
+                <div className="relative flex py-1 items-center">
+                  <div className="flex-grow border-t border-[#1e2f57]"></div>
+                  <span className="flex-shrink mx-3 text-[10px] text-[#64748b] uppercase tracking-wider">
+                    অথবা জিমেল দিয়ে {authMode === 'login' ? 'লগইন' : authMode === 'signup' ? 'সাইনআপ' : 'রিকভারি'}
+                  </span>
+                  <div className="flex-grow border-t border-[#1e2f57]"></div>
+                </div>
               </div>
+
+              {/* TAB 1: LOGIN FORM */}
+              {authMode === 'login' && (
+                <form onSubmit={handleGmailLogin} className="space-y-3.5">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1">
+                      জিমেল এড্রেস (Gmail Address)
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="email"
+                        placeholder="আপনার জিমেল এড্রেস দিন..."
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        required
+                        className="w-full pl-9 pr-3.5 py-2.5 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[11px] font-semibold text-[#cbd5e1]">
+                        পাসওয়ার্ড (Password)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode('forgot')}
+                        className="text-[10px] text-[#38bdf8] hover:underline cursor-pointer"
+                      >
+                        পাসওয়ার্ড মনে নেই?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type={showLoginPassword ? 'text' : 'password'}
+                        placeholder="অ্যাডমিন পাসওয়ার্ড লিখুন..."
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        required
+                        className="w-full pl-9 pr-9 py-2.5 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none tracking-wider"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748b] hover:text-[#cbd5e1] cursor-pointer"
+                      >
+                        {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-[#94a3b8]">
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="rounded border-[#1e2f57] text-[#2563eb] focus:ring-0"
+                      />
+                      <span>এই ডিভাইসে সেশন মনে রাখুন</span>
+                    </label>
+                    <span className="text-[10px] text-emerald-400/80 font-mono">256-bit AES</span>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isAuthLoading}
+                    className="w-full py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#2563eb] via-[#1d4ed8] to-[#3b82f6] hover:opacity-95 rounded-xl cursor-pointer transition-all shadow-lg shadow-[#2563eb]/25 flex items-center justify-center gap-2"
+                  >
+                    {isAuthLoading ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>যাচাই করা হচ্ছে...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="w-4 h-4" />
+                        <span>অ্যাডমিন প্যানেলে প্রবেশ করুন</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {/* TAB 2: SIGN UP FORM */}
+              {authMode === 'signup' && (
+                <form onSubmit={handleGmailSignUp} className="space-y-3">
+                  <div className="p-2.5 rounded-xl bg-[#111c38]/60 border border-[#1e2f57] text-[11px] text-[#94a3b8] flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-[#38bdf8] shrink-0" />
+                    <span>
+                      নিরাপত্তা শিল্ড: শুধুমাত্র অনুমোদিত জিমেল (<strong className="text-[#f1f5f9]">{settings.email || 'hmashikurrahman84@gmail.com'}</strong>) দিয়ে অ্যাডমিন অ্যাকাউন্ট সক্রিয় করা যাবে।
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1">
+                      আপনার পূর্ণ নাম (Full Name)
+                    </label>
+                    <div className="relative">
+                      <User className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="যেমন: H.M. Ashikur Rahman"
+                        value={signUpName}
+                        onChange={(e) => setSignUpName(e.target.value)}
+                        required
+                        className="w-full pl-9 pr-3.5 py-2 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1">
+                      জিমেল এড্রেস (Gmail Address)
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="email"
+                        placeholder="hmashikurrahman84@gmail.com"
+                        value={signUpEmail}
+                        onChange={(e) => setSignUpEmail(e.target.value)}
+                        required
+                        className="w-full pl-9 pr-3.5 py-2 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1">
+                        নতুন পাসওয়ার্ড
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type={showSignUpPassword ? 'text' : 'password'}
+                          placeholder="কমপক্ষে ৬ অক্ষর..."
+                          value={signUpPassword}
+                          onChange={(e) => setSignUpPassword(e.target.value)}
+                          required
+                          className="w-full pl-9 pr-8 py-2 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#64748b] hover:text-[#cbd5e1] cursor-pointer"
+                        >
+                          {showSignUpPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1">
+                        পাসওয়ার্ড নিশ্চিত করুন
+                      </label>
+                      <div className="relative">
+                        <Lock className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type={showSignUpPassword ? 'text' : 'password'}
+                          placeholder="পুনরায় লিখুন..."
+                          value={signUpConfirm}
+                          onChange={(e) => setSignUpConfirm(e.target.value)}
+                          required
+                          className="w-full pl-9 pr-3.5 py-2 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[11px] font-semibold text-[#cbd5e1]">
+                        সিকিউরিটি রিকভারি পিন (Security Recovery PIN)
+                      </label>
+                      <span className="text-[10px] text-[#94a3b8]">পাসওয়ার্ড ভুলে গেলে প্রয়োজন হবে</span>
+                    </div>
+                    <div className="relative">
+                      <KeyRound className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        maxLength={8}
+                        placeholder="যেমন: 788553 (৪-৬ ডিজিটের পিন)"
+                        value={signUpPin}
+                        onChange={(e) => setSignUpPin(e.target.value)}
+                        required
+                        className="w-full pl-9 pr-3.5 py-2 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none font-mono tracking-widest"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isAuthLoading}
+                    className="w-full py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#2563eb] to-[#3b82f6] hover:opacity-95 rounded-xl cursor-pointer transition-all shadow-lg shadow-[#2563eb]/25 flex items-center justify-center gap-2 mt-2"
+                  >
+                    {isAuthLoading ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>একাউন্ট তৈরি হচ্ছে...</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        <span>জিমেল দিয়ে অ্যাডমিন একাউন্ট সক্রিয় করুন</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {/* TAB 3: PASSWORD RECOVERY */}
+              {authMode === 'forgot' && (
+                <form onSubmit={handlePasswordRecovery} className="space-y-3.5">
+                  <div className="p-2.5 rounded-xl bg-[#111c38]/60 border border-[#1e2f57] text-[11px] text-[#94a3b8] flex items-center gap-2">
+                    <Key className="w-4 h-4 text-[#38bdf8] shrink-0" />
+                    <span>
+                      নিবন্ধিত জিমেল ও সাইনআপের সময় ব্যবহৃত সিকিউরিটি পিন দিয়ে নতুন পাসওয়ার্ড সেট করুন।
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1">
+                      নিবন্ধিত জিমেল এড্রেস
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="email"
+                        placeholder="আপনার জিমেল এড্রেস..."
+                        value={recoveryEmail}
+                        onChange={(e) => setRecoveryEmail(e.target.value)}
+                        required
+                        className="w-full pl-9 pr-3.5 py-2.5 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1">
+                      সিকিউরিটি পিন (Master Security PIN)
+                    </label>
+                    <div className="relative">
+                      <KeyRound className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="আপনার ৪-৬ ডিজিটের পিন (ডিফল্ট: 788553)..."
+                        value={recoveryPin}
+                        onChange={(e) => setRecoveryPin(e.target.value)}
+                        required
+                        className="w-full pl-9 pr-3.5 py-2.5 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none font-mono tracking-widest"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1">
+                        নতুন পাসওয়ার্ড
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="কমপক্ষে ৬ অক্ষর..."
+                        value={recoveryNewPass}
+                        onChange={(e) => setRecoveryNewPass(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1">
+                        পাসওয়ার্ড নিশ্চিত করুন
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="পুনরায় লিখুন..."
+                        value={recoveryConfirm}
+                        onChange={(e) => setRecoveryConfirm(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 bg-[#080d1a] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isAuthLoading}
+                    className="w-full py-2.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 rounded-xl cursor-pointer transition-all shadow-md flex items-center justify-center gap-2 mt-2"
+                  >
+                    {isAuthLoading ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>আপডেট হচ্ছে...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>পাসওয়ার্ড রিসেট ও লগইন করুন</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {/* Security Shield Guarantee Note */}
+              <div className="p-3 rounded-xl bg-[#080d1a] border border-[#1b2a4e] text-center space-y-1">
+                <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-[#cbd5e1]">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>মালিকানাধীন সর্বোচ্চ নিরাপত্তা সুরক্ষাবলয়</span>
+                </div>
+                <p className="text-[10px] text-[#64748b] leading-relaxed">
+                  যাকেই পোর্টফোলিওর লিঙ্ক দেওয়া হোক, আপনার অনুমোদিত জিমেল ও পাসওয়ার্ড ছাড়া কেউ কোনো ডিজাইন যোগ, ডিলিট বা এডিট করতে পারবে না।
+                </p>
+              </div>
+
             </div>
           </div>
         ) : (
@@ -1115,19 +1668,101 @@ export const AdminModal: React.FC = () => {
                       />
                     </div>
 
-                    {/* Change Admin Password */}
-                    <div className="p-4 rounded-xl bg-[#0e162c] border border-[#1b2a4e] space-y-2">
-                      <label className="block text-xs font-bold text-[#38bdf8] flex items-center gap-1.5">
-                        <Key className="w-3.5 h-3.5" />
-                        নতুন অ্যাডমিন পাসওয়ার্ড নির্ধারণ (ঐচ্ছিক)
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="পাসওয়ার্ড পরিবর্তন করতে চাইলে এখানে নতুন পাসওয়ার্ড লিখুন..."
-                        value={newAdminPass}
-                        onChange={(e) => setNewAdminPass(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#080d1a] border border-[#1e2f57] text-xs text-[#f1f5f9] rounded outline-none"
-                      />
+                    {/* Advanced Admin Security & Gmail Account Management */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-[#080d1a] border border-[#1e2f57] space-y-4">
+                      <div className="flex items-center justify-between border-b border-[#1b2a4e] pb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-[#2563eb]/20 text-[#38bdf8] border border-[#2563eb]/30">
+                            <ShieldCheck className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h5 className="text-xs font-bold text-[#f1f5f9]">অ্যাডমিন সিকিউরিটি ও জিমেল একাউন্ট সেটিংস</h5>
+                            <p className="text-[10px] text-[#94a3b8]">আপনার জিমেল, পাসওয়ার্ড ও একাউন্ট নিয়ন্ত্রণ করুন</p>
+                          </div>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-500/30">
+                          সুরক্ষিত
+                        </span>
+                      </div>
+
+                      {/* Current Account Card */}
+                      {currentAdminUser && (
+                        <div className="p-3 rounded-xl bg-[#0e162c] border border-[#162344] flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-full overflow-hidden border border-[#38bdf8]/40 bg-[#080d1a] shrink-0">
+                              <img
+                                src={currentAdminUser.avatarUrl || settings.designerPhotoUrl || 'https://res.cloudinary.com/fht84r3o/image/upload/v1792481081/%E0%A7%A7%E0%A7%A7.jpg'}
+                                alt="Admin Profile"
+                                className="w-full h-full object-cover object-top"
+                              />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-[#f1f5f9] flex items-center gap-1.5">
+                                <span>{currentAdminUser.name}</span>
+                                <span className="text-[10px] text-[#38bdf8] font-semibold px-1.5 py-0.2 bg-[#121c38] rounded border border-[#38bdf8]/30">
+                                  {currentAdminUser.role === 'super_admin' ? 'সুপার অ্যাডমিন' : 'ম্যানেজার'}
+                                </span>
+                              </p>
+                              <p className="text-[11px] text-[#94a3b8] font-mono">{currentAdminUser.email}</p>
+                            </div>
+                          </div>
+                          <div className="text-right text-[10px] text-[#64748b]">
+                            <p>তৈরি: {new Date(currentAdminUser.createdAt).toLocaleDateString('bn-BD')}</p>
+                            <p className="text-emerald-400 font-medium">সেশন সক্রিয়</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1 flex items-center gap-1">
+                            <Key className="w-3 h-3 text-[#38bdf8]" />
+                            <span>নতুন অ্যাডমিন পাসওয়ার্ড (ঐচ্ছিক)</span>
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="পরিবর্তন না করতে চাইলে খালি রাখুন..."
+                            value={newAdminPass}
+                            onChange={(e) => setNewAdminPass(e.target.value)}
+                            className="w-full px-3 py-2 bg-[#0e162c] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1 flex items-center gap-1">
+                            <KeyRound className="w-3 h-3 text-[#38bdf8]" />
+                            <span>সিকিউরিটি রিকভারি পিন</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="যেমন: 788553"
+                            value={siteSettingsForm.adminPin || ''}
+                            onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, adminPin: e.target.value })}
+                            className="w-full px-3 py-2 bg-[#0e162c] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none font-mono tracking-widest"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Authorized Email Whitelist */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#cbd5e1] mb-1 flex items-center gap-1">
+                          <Mail className="w-3 h-3 text-[#38bdf8]" />
+                          <span>অনুমোদিত অ্যাডমিন জিমেল তালিকা (Authorized Gmail Whitelist)</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="কমা দিয়ে একাধিক জিমেল লিখুন (যেমন: hmashikurrahman84@gmail.com, another@gmail.com)"
+                          value={(siteSettingsForm.authorizedAdminEmails || ['hmashikurrahman84@gmail.com']).join(', ')}
+                          onChange={(e) => {
+                            const arr = e.target.value.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+                            setSiteSettingsForm({ ...siteSettingsForm, authorizedAdminEmails: arr });
+                          }}
+                          className="w-full px-3 py-2 bg-[#0e162c] border border-[#1e2f57] focus:border-[#38bdf8] text-xs text-[#f1f5f9] rounded-xl outline-none font-mono"
+                        />
+                        <p className="text-[10px] text-[#64748b] mt-1 leading-relaxed">
+                          🛡️ শুধুমাত্র এই তালিকার জিমেলগুলোই সাইনআপ করে অ্যাডমিন হতে পারবে। ক্লায়েন্ট বা অপরিচিত কেউ সাইনআপ করার চেষ্টা করলে সিস্টেম স্বয়ংক্রিয়ভাবে ব্লক করবে।
+                        </p>
+                      </div>
                     </div>
 
                     <button

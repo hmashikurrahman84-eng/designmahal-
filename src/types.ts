@@ -72,4 +72,24 @@ export interface SiteSettings {
   behanceUrl: string;
   location: string;
   adminPasswordHash: string; // Stored securely in client storage
+  authorizedAdminEmails?: string[]; // Allowed admin Gmail addresses
+  adminPin?: string; // 6-digit recovery PIN
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  securityPin: string;
+  role: 'super_admin' | 'admin';
+  createdAt: string;
+  lastLogin: string;
+  avatarUrl?: string;
+}
+
+export interface AdminAuthResult {
+  success: boolean;
+  error?: string;
+  message?: string;
 }

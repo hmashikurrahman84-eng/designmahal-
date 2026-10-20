@@ -79,10 +79,10 @@ export const DeploymentGuideModal: React.FC = () => {
             </div>
             <div className="text-xs sm:text-sm text-[#cbd5e1] leading-relaxed pl-10 space-y-2">
               <p>
-                ১. ওয়েবসাইটের উপরে বা ফুটারে থাকা <strong className="text-[#38bdf8]">অ্যাডমিন (Shield আইকন)</strong>-এ ক্লিক করুন।
+                ১. ওয়েবসাইটের ফুটারে থাকা লক আইকন বা কিবোর্ডে <code className="bg-[#080d1a] px-1.5 py-0.5 rounded text-[#38bdf8] font-mono">Ctrl+Shift+A</code> চেপে অ্যাডমিন পোর্টালে যান।
               </p>
               <p>
-                ২. ডিফল্ট পাসওয়ার্ড <code className="bg-[#080d1a] px-2 py-0.5 rounded text-[#38bdf8] font-mono">mahal2026</code> দিয়ে লগইন করুন।
+                ২. আপনার অনুমোদিত জিমেল (<code className="bg-[#080d1a] px-1.5 py-0.5 rounded text-[#38bdf8] font-mono">hmashikurrahman84@gmail.com</code>) ও পাসওয়ার্ড দিয়ে লগইন করুন, অথবা "Google একাউন্ট দিয়ে এক ক্লিকে প্রবেশ" চাপুন। প্রয়োজনে "সাইনআপ" ট্যাব থেকে নতুন একাউন্টও খুলতে পারেন।
               </p>
               <p>
                 ৩. <strong className="text-white">"ডিজাইনসমূহ"</strong> ট্যাবে গিয়ে ডিজাইনের নাম, সঠিক ক্যাটাগরি (Logo, Poster, Banner ইত্যাদি), এবং বিবরণ লিখুন।

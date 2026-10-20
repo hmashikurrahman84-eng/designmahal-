@@ -1,4 +1,4 @@
-import { DesignItem, ServiceItem, SiteSettings } from '../types';
+import { AdminUser, DesignItem, ServiceItem, SiteSettings } from '../types';
 
 export const INITIAL_SETTINGS: SiteSettings = {
   brandName: 'Design Mahal',
@@ -18,8 +18,24 @@ export const INITIAL_SETTINGS: SiteSettings = {
   instagramUrl: 'https://www.instagram.com/designmahal22?exln=MTdjeWFkYXBiNDY=',
   behanceUrl: 'https://www.behance.net/hmashikurrahman',
   location: 'ঢাকা, বাংলাদেশ',
-  adminPasswordHash: 'mahal2026', // Default PIN for admin panel, can be changed in settings
+  adminPasswordHash: 'mahal2026', // Default password for admin panel, can be changed in settings
+  authorizedAdminEmails: ['hmashikurrahman84@gmail.com'], // Pre-authorized primary admin Gmail
+  adminPin: '788553', // 6-digit master recovery PIN
 };
+
+export const INITIAL_ADMIN_USERS: AdminUser[] = [
+  {
+    id: 'admin-ashikur-01',
+    name: 'H.M. Ashikur Rahman',
+    email: 'hmashikurrahman84@gmail.com',
+    passwordHash: 'mahal2026',
+    securityPin: '788553',
+    role: 'super_admin',
+    createdAt: '2026-01-01',
+    lastLogin: '2026-10-20',
+    avatarUrl: 'https://res.cloudinary.com/fht84r3o/image/upload/v1792481081/%E0%A7%A7%E0%A7%A7.jpg',
+  },
+];
 
 export const INITIAL_DESIGNS: DesignItem[] = [
   {
