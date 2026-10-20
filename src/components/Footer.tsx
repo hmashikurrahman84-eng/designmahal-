@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Shield, BookOpen, ArrowUp, Facebook, Instagram, Globe } from 'lucide-react';
+import { Shield, BookOpen, ArrowUp, Facebook, Instagram, Globe, Lock, CheckCircle2 } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const { settings, setIsAdminModalOpen, setIsGuideModalOpen, isAdminAuthenticated } = usePortfolio();
@@ -101,39 +101,73 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Admin & Guide quick access */}
+          {/* Column 3: Guarantees for visitors / Admin controls for authenticated owner */}
           <div className="md:col-span-3 space-y-3">
-            <h5 className="font-bold text-[#f1f5f9] uppercase tracking-wider text-xs mb-3">
-              ম্যানেজমেন্ট ও গাইড
-            </h5>
-            <div className="space-y-2">
-              <button
-                onClick={() => setIsGuideModalOpen(true)}
-                className="w-full inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold text-[#cbd5e1] bg-[#0e162c] hover:bg-[#162345] border border-[#1b2a4e] rounded-lg transition-colors cursor-pointer"
-              >
-                <BookOpen className="w-3.5 h-3.5 text-[#38bdf8]" />
-                <span>ওয়েবসাইট পরিচালনা নির্দেশিকা</span>
-              </button>
-              <button
-                onClick={() => setIsAdminModalOpen(true)}
-                className={`w-full inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer border ${
-                  isAdminAuthenticated
-                    ? 'text-[#38bdf8] bg-[#162345] border-[#38bdf8]/40 shadow-sm shadow-[#38bdf8]/20'
-                    : 'text-[#cbd5e1] bg-[#0e162c] hover:bg-[#162345] border-[#1b2a4e]'
-                }`}
-              >
-                <Shield className="w-3.5 h-3.5 text-[#38bdf8]" />
-                <span>{isAdminAuthenticated ? 'ডিজাইনার অ্যাডমিন প্যানেল (লগইন করা)' : 'ডিজাইনার অ্যাডমিন প্যানেল'}</span>
-              </button>
-            </div>
+            {isAdminAuthenticated ? (
+              <>
+                <h5 className="font-bold text-[#38bdf8] uppercase tracking-wider text-xs mb-3 flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-[#38bdf8]" />
+                  <span>অ্যাডমিন ম্যানেজমেন্ট</span>
+                </h5>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setIsAdminModalOpen(true)}
+                    className="w-full inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold text-[#38bdf8] bg-[#162345] hover:bg-[#1f305e] border border-[#38bdf8]/40 rounded-lg transition-colors cursor-pointer shadow-sm shadow-[#2563eb]/20"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-[#38bdf8]" />
+                    <span>কন্ট্রোল প্যানেল খুলুন</span>
+                  </button>
+                  <button
+                    onClick={() => setIsGuideModalOpen(true)}
+                    className="w-full inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold text-[#cbd5e1] bg-[#0e162c] hover:bg-[#162345] border border-[#1b2a4e] rounded-lg transition-colors cursor-pointer"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-[#38bdf8]" />
+                    <span>সাইট পরিচালনা নির্দেশিকা</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h5 className="font-bold text-[#f1f5f9] uppercase tracking-wider text-xs mb-3">
+                  আমাদের বিশেষত্ব
+                </h5>
+                <ul className="space-y-2 text-xs text-[#94a3b8]">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#38bdf8] shrink-0" />
+                    <span>১০০% কাস্টম ও প্রফেশনাল ভেক্টর ডিজাইন</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#38bdf8] shrink-0" />
+                    <span>প্রিন্ট ও সোশ্যাল মিডিয়ার জন্য নিখুঁত ফাইল</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#38bdf8] shrink-0" />
+                    <span>সময়মত ডেলিভারি ও সন্তুষ্টির নিশ্চয়তা</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#38bdf8] shrink-0" />
+                    <span>সহজ অর্ডার ও সার্বক্ষণিক যোগাযোগ</span>
+                  </li>
+                </ul>
+              </>
+            )}
           </div>
 
         </div>
 
-        {/* Quiet Copyright & Back to Top */}
+        {/* Quiet Copyright & Back to Top with discreet owner lock */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#64748b]">
-          <div>
-            © {new Date().getFullYear()} {settings.brandName}. সর্বস্বত্ব সংরক্ষিত। Crafted for visual distinction.
+          <div className="flex items-center gap-2">
+            <span>© {new Date().getFullYear()} {settings.brandName}. সর্বস্বত্ব সংরক্ষিত।</span>
+            {/* Subtle owner lock trigger */}
+            <button
+              onClick={() => setIsAdminModalOpen(true)}
+              title="মালিকের সিকিউর এক্সেস"
+              aria-label="Admin Access"
+              className="p-1 rounded opacity-25 hover:opacity-100 hover:text-[#38bdf8] transition-all cursor-pointer"
+            >
+              <Lock className="w-3 h-3" />
+            </button>
           </div>
           <button
             onClick={scrollToTop}

@@ -376,8 +376,8 @@ export const AdminModal: React.FC = () => {
                 </button>
               </form>
 
-              <div className="p-2.5 rounded bg-[#101932] border border-[#1e2f57] text-[11px] text-[#94a3b8] text-left">
-                ℹ️ <strong>ডিফল্ট পাসওয়ার্ড:</strong> <code className="text-[#38bdf8] font-mono">mahal2026</code> (লগইন করে 'সেটিংস' থেকে পরিবর্তন করতে পারবেন)।
+              <div className="p-2.5 rounded bg-[#101932] border border-[#1e2f57] text-[11px] text-[#94a3b8] text-center">
+                🔒 এই কন্ট্রোল প্যানেলটি শুধুমাত্র অ্যাডমিনের ব্যবহারের জন্য সংরক্ষিত।
               </div>
             </div>
           </div>
