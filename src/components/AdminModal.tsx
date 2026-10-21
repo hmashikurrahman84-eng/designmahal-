@@ -64,6 +64,7 @@ export const AdminModal: React.FC = () => {
     updateOrderStatus,
     deleteOrder,
     reviews,
+    addReview,
     approveReview,
     deleteReview,
     settings,
@@ -149,6 +150,14 @@ export const AdminModal: React.FC = () => {
   // Backup Import State
   const [importJsonText, setImportJsonText] = useState('');
   const [backupNotice, setBackupNotice] = useState<string | null>(null);
+
+  // Admin Review Management State
+  const [reviewActionNotice, setReviewActionNotice] = useState<string | null>(null);
+  const [adminRevName, setAdminRevName] = useState('');
+  const [adminRevRole, setAdminRevRole] = useState('');
+  const [adminRevService, setAdminRevService] = useState('প্রফেশনাল লোগো ডিজাইন');
+  const [adminRevRating, setAdminRevRating] = useState(5);
+  const [adminRevComment, setAdminRevComment] = useState('');
 
   if (!isAdminModalOpen) return null;
 
@@ -1501,7 +1510,7 @@ export const AdminModal: React.FC = () => {
 
               {/* TAB: REVIEWS MANAGER */}
               {activeTab === 'reviews' && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1b2a4e] pb-3">
                     <div>
                       <h4 className="text-sm font-bold text-[#f1f5f9]">
@@ -1523,18 +1532,123 @@ export const AdminModal: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Confirmation Notice after Admin Approves or Submits a Review */}
+                  {reviewActionNotice && (
+                    <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/50 text-emerald-200 text-xs flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>{reviewActionNotice}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setIsAdminModalOpen(false);
+                          setTimeout(() => {
+                            document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
+                          }, 150);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg cursor-pointer"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>ওয়েবসাইটে লাইভ দেখুন</span>
+                      </button>
+                    </div>
+                  )}
+
                   {/* Notification Banner for Pending Reviews */}
                   {reviews.filter((r) => r.status === 'pending').length > 0 && (
                     <div className="p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/40 text-amber-200 text-xs flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
                         <span>
-                          <strong>নতুন নোটিফিকেশন:</strong> {reviews.filter((r) => r.status === 'pending').length}টি নতুন রিভিউ অনুমোদনের অপেক্ষায় রয়েছে। নিচে <strong>"সাবমিট ও প্রকাশ করুন"</strong> বাটনে ক্লিক করলে তা ওয়েবসাইটে দেখা যাবে।
+                          <strong>নতুন নোটিফিকেশন:</strong> {reviews.filter((r) => r.status === 'pending').length}টি নতুন রিভিউ অনুমোদনের অপেক্ষায় রয়েছে। নিচে <strong>"সাবমিট ও প্রকাশ করুন"</strong> বাটনে ক্লিক করলে তা সাথে সাথে ওয়েবসাইটে শো করবে।
                         </span>
                       </div>
                     </div>
                   )}
 
+                  {/* Admin Direct Review Submit Form */}
+                  <div className="p-4 rounded-xl bg-[#0e162c] border border-[#1b2a4e]">
+                    <h5 className="text-xs font-bold text-[#38bdf8] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                      <Plus className="w-4 h-4" />
+                      <span>অ্যাডমিন থেকে নতুন রিভিউ সাবমিট করুন (সরাসরি ওয়েবসাইটে শো করবে)</span>
+                    </h5>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!adminRevName.trim() || !adminRevComment.trim()) return;
+                        addReview({
+                          clientName: adminRevName.trim(),
+                          companyOrRole: adminRevRole.trim() || undefined,
+                          serviceName: adminRevService,
+                          rating: adminRevRating,
+                          comment: adminRevComment.trim(),
+                          status: 'approved',
+                        });
+                        setReviewActionNotice(
+                          `✓ "${adminRevName.trim()}" এর রিভিউটি সফলভাবে সাবমিট হয়েছে এবং এখন ওয়েবসাইটে শো করছে!`
+                        );
+                        setAdminRevName('');
+                        setAdminRevRole('');
+                        setAdminRevComment('');
+                        setAdminRevRating(5);
+                      }}
+                      className="space-y-3"
+                    >
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <input
+                          type="text"
+                          required
+                          placeholder="ক্লায়েন্ট বা স্টুডেন্টের নাম *"
+                          value={adminRevName}
+                          onChange={(e) => setAdminRevName(e.target.value)}
+                          className="px-3 py-2 bg-[#080d1a] border border-[#1e2f57] rounded-lg text-xs text-white outline-none focus:border-[#38bdf8]"
+                        />
+                        <input
+                          type="text"
+                          placeholder="পরিচয় / প্রতিষ্ঠান / ব্যাচ (ঐচ্ছিক)"
+                          value={adminRevRole}
+                          onChange={(e) => setAdminRevRole(e.target.value)}
+                          className="px-3 py-2 bg-[#080d1a] border border-[#1e2f57] rounded-lg text-xs text-white outline-none focus:border-[#38bdf8]"
+                        />
+                        <select
+                          value={adminRevService}
+                          onChange={(e) => setAdminRevService(e.target.value)}
+                          className="px-3 py-2 bg-[#080d1a] border border-[#1e2f57] rounded-lg text-xs text-white outline-none focus:border-[#38bdf8]"
+                        >
+                          {services.map((srv) => (
+                            <option key={srv.id} value={srv.nameBn}>
+                              {srv.nameBn}
+                            </option>
+                          ))}
+                          <option value="প্রফেশনাল গ্রাফিক ডিজাইন কোর্স (স্টুডেন্ট)">
+                            প্রফেশনাল গ্রাফিক ডিজাইন কোর্স (স্টুডেন্ট)
+                          </option>
+                          <option value="লোগো ও ব্র্যান্ডিং স্পেশাল কোর্স (স্টুডেন্ট)">
+                            লোগো ও ব্র্যান্ডিং স্পেশাল কোর্স (স্টুডেন্ট)
+                          </option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                        <input
+                          type="text"
+                          required
+                          placeholder="রিভিউ ও মতামত লিখুন *"
+                          value={adminRevComment}
+                          onChange={(e) => setAdminRevComment(e.target.value)}
+                          className="flex-1 px-3 py-2 bg-[#080d1a] border border-[#1e2f57] rounded-lg text-xs text-white outline-none focus:border-[#38bdf8]"
+                        />
+                        <button
+                          type="submit"
+                          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#2563eb] hover:bg-[#1d4ed8] rounded-lg transition-colors cursor-pointer shrink-0"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>রিভিউ সাবমিট ও প্রকাশ করুন</span>
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  {/* List of Pending & Approved Reviews */}
                   {reviews.length === 0 ? (
                     <div className="p-8 text-center bg-[#080d1a] border border-[#1e2f57] rounded-xl text-xs text-[#8e95a7]">
                       এখনো কোনো রিভিউ জমা হয়নি।
@@ -1565,7 +1679,7 @@ export const AdminModal: React.FC = () => {
                                   </span>
                                 ) : (
                                   <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                                    ✓ প্রকাশিত
+                                    ✓ ওয়েবসাইটে প্রকাশিত
                                   </span>
                                 )}
                               </div>
@@ -1584,8 +1698,13 @@ export const AdminModal: React.FC = () => {
 
                                 {isPending && (
                                   <button
-                                    onClick={() => approveReview(rev.id)}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg shadow-sm transition-colors cursor-pointer"
+                                    onClick={() => {
+                                      approveReview(rev.id);
+                                      setReviewActionNotice(
+                                        `✓ "${rev.clientName}" এর রিভিউটি সফলভাবে অনুমোদিত হয়েছে এবং এখন ওয়েবসাইটে শো করছে!`
+                                      );
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
                                     title="ওয়েবসাইটে প্রকাশ করুন"
                                   >
                                     <Check className="w-3.5 h-3.5" />
@@ -1615,7 +1734,7 @@ export const AdminModal: React.FC = () => {
                               <span>তারিখ: {new Date(rev.createdAt).toLocaleString('bn-BD')}</span>
                               {isPending ? (
                                 <span className="text-amber-400 font-semibold">
-                                  অ্যাডমিন অনুমোদনের অপেক্ষায় (পাবলিক সাইটে লুকানো আছে)
+                                  অ্যাডমিন অনুমোদনের অপেক্ষায় (সাবমিট করলেই ওয়েবসাইটে শো করবে)
                                 </span>
                               ) : (
                                 <span className="text-emerald-400 font-semibold">

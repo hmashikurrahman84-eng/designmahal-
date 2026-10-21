@@ -777,30 +777,53 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       status: 'নতুন (New)',
     };
 
-    setOrders((prev) => [newOrder, ...prev.filter((o) => o.id !== newOrder.id)]);
+    setOrders((prev) => {
+      const updated = [newOrder, ...prev.filter((o) => o.id !== newOrder.id)];
+      try {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
 
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.ORDERS);
-      const parsed = saved ? JSON.parse(saved) : [];
-      localStorage.setItem(
-        STORAGE_KEYS.ORDERS,
-        JSON.stringify([newOrder, ...parsed.filter((o: any) => o.id !== newOrder.id)])
-      );
-    } catch {}
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newOrder),
+    }).catch(() => {});
 
     return newOrder;
   };
 
   const updateOrderStatus = (id: string, status: OrderRequest['status'], notes?: string) => {
-    setOrders((prev) =>
-      prev.map((ord) =>
+    setOrders((prev) => {
+      const updated = prev.map((ord) =>
         ord.id === id ? { ...ord, status, ...(notes !== undefined ? { notes } : {}) } : ord
-      )
-    );
+      );
+      try {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    fetch(`/api/orders/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, ...(notes !== undefined ? { notes } : {}) }),
+    }).catch(() => {});
   };
 
   const deleteOrder = (id: string) => {
-    setOrders((prev) => prev.filter((ord) => ord.id !== id));
+    setOrders((prev) => {
+      const updated = prev.filter((ord) => ord.id !== id);
+      try {
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    fetch(`/api/orders/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }).catch(() => {});
   };
 
   const addReview = (reviewData: Omit<ClientReview, 'id' | 'createdAt'>): ClientReview => {
@@ -809,22 +832,119 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       id: `rev-${Date.now().toString().slice(-6)}`,
       createdAt: new Date().toISOString(),
       verified: true,
-      status: 'pending',
+      status: reviewData.status || 'pending',
     };
 
-    setReviews((prev) => [newReview, ...prev]);
+    setReviews((prev) => {
+      const updated = [newReview, ...prev.filter((r) => r.id !== newReview.id)];
+      try {
+        localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    fetch('/api/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newReview),
+    }).catch(() => {});
+
     return newReview;
   };
 
   const approveReview = (id: string) => {
-    setReviews((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: 'approved' } : r))
-    );
+    setReviews((prev) => {
+      const updated = prev.map((r) =>
+        r.id === id ? { ...r, status: 'approved' as const, verified: true } : r
+      );
+      try {
+        localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    fetch(`/api/reviews/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'approved', verified: true }),
+    }).catch(() => {});
   };
 
   const deleteReview = (id: string) => {
-    setReviews((prev) => prev.filter((r) => r.id !== id));
+    setReviews((prev) => {
+      const updated = prev.filter((r) => r.id !== id);
+      try {
+        localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    fetch(`/api/reviews/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }).catch(() => {});
   };
+
+  // Sync orders & reviews from backend API and across tabs
+  useEffect(() => {
+    const syncFromBackend = async () => {
+      try {
+        const [ordersRes, reviewsRes] = await Promise.all([
+          fetch('/api/orders'),
+          fetch('/api/reviews'),
+        ]);
+        if (ordersRes.ok) {
+          const serverOrders: OrderRequest[] = await ordersRes.json();
+          if (Array.isArray(serverOrders) && serverOrders.length > 0) {
+            setOrders((prev) => {
+              const map = new Map<string, OrderRequest>();
+              prev.forEach((o) => map.set(o.id, o));
+              serverOrders.forEach((o) => map.set(o.id, o));
+              return Array.from(map.values()).sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              );
+            });
+          }
+        }
+        if (reviewsRes.ok) {
+          const serverReviews: ClientReview[] = await reviewsRes.json();
+          if (Array.isArray(serverReviews) && serverReviews.length > 0) {
+            setReviews((prev) => {
+              const map = new Map<string, ClientReview>();
+              prev.forEach((r) => map.set(r.id, r));
+              serverReviews.forEach((r) => map.set(r.id, r));
+              return Array.from(map.values()).sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              );
+            });
+          }
+        }
+      } catch {
+        // Ignore network errors if offline
+      }
+    };
+
+    syncFromBackend();
+    const interval = setInterval(syncFromBackend, 4000);
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEYS.REVIEWS && e.newValue) {
+        try {
+          setReviews(JSON.parse(e.newValue));
+        } catch {}
+      }
+      if (e.key === STORAGE_KEYS.ORDERS && e.newValue) {
+        try {
+          setOrders(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const updateSettings = (newSettings: Partial<SiteSettings>) => {
     setSettings((prev) => ({ ...prev, ...newSettings }));

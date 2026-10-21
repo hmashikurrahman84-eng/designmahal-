@@ -27,7 +27,7 @@ export const Reviews: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Filter only approved reviews for public view
-  const approvedReviews = reviews.filter((r) => r.status === 'approved');
+  const approvedReviews = reviews.filter((r) => r.status === 'approved' || !r.status);
 
   // Compute average rating from approved reviews
   const averageRating =
