@@ -64,6 +64,7 @@ export const AdminModal: React.FC = () => {
     updateOrderStatus,
     deleteOrder,
     reviews,
+    approveReview,
     deleteReview,
     settings,
     updateSettings,
@@ -983,14 +984,21 @@ export const AdminModal: React.FC = () => {
 
               <button
                 onClick={() => setActiveTab('reviews')}
-                className={`flex items-center gap-2.5 px-3 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${
+                className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${
                   activeTab === 'reviews'
                     ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/25'
                     : 'text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#121c38]'
                 }`}
               >
-                <Star className="w-4 h-4" />
-                <span>ক্লায়েন্ট রিভিউ ({reviews.length})</span>
+                <div className="flex items-center gap-2.5">
+                  <Star className="w-4 h-4" />
+                  <span>রিভিউ ({reviews.length})</span>
+                </div>
+                {reviews.filter((r) => r.status === 'pending').length > 0 && (
+                  <span className="px-1.5 py-0.5 text-[10px] font-extrabold bg-amber-500 text-black rounded-full animate-pulse">
+                    {reviews.filter((r) => r.status === 'pending').length} নতুন
+                  </span>
+                )}
               </button>
 
               <button
@@ -1494,17 +1502,38 @@ export const AdminModal: React.FC = () => {
               {/* TAB: REVIEWS MANAGER */}
               {activeTab === 'reviews' && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#1b2a4e] pb-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1b2a4e] pb-3">
                     <div>
-                      <h4 className="text-sm font-bold text-[#f1f5f9]">ক্লায়েন্ট রিভিউ ও ফিডব্যাক</h4>
+                      <h4 className="text-sm font-bold text-[#f1f5f9]">
+                        ক্লায়েন্ট ও স্টুডেন্টদের প্রতিক্রিয়া ও রিভিউ
+                      </h4>
                       <p className="text-xs text-[#8e95a7] mt-0.5">
-                        ওয়েবসাইট থেকে ক্লায়েন্টদের দেওয়া রিভিউ ও রেটিং ব্যবস্থাপনা
+                        ক্লায়েন্ট বা স্টুডেন্ট রিভিউ দিলে এখানে আসবে — আপনি সাবমিট/অনুমোদন দিলেই ওয়েবসাইটে প্রকাশিত হবে
                       </p>
                     </div>
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#1d4ed8]/30 text-[#38bdf8] border border-[#38bdf8]/30">
-                      মোট রিভিউ: {reviews.length}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {reviews.filter((r) => r.status === 'pending').length > 0 && (
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse">
+                          অপেক্ষমাণ: {reviews.filter((r) => r.status === 'pending').length}
+                        </span>
+                      )}
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#1d4ed8]/30 text-[#38bdf8] border border-[#38bdf8]/30">
+                        মোট রিভিউ: {reviews.length}
+                      </span>
+                    </div>
                   </div>
+
+                  {/* Notification Banner for Pending Reviews */}
+                  {reviews.filter((r) => r.status === 'pending').length > 0 && (
+                    <div className="p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/40 text-amber-200 text-xs flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                        <span>
+                          <strong>নতুন নোটিফিকেশন:</strong> {reviews.filter((r) => r.status === 'pending').length}টি নতুন রিভিউ অনুমোদনের অপেক্ষায় রয়েছে। নিচে <strong>"সাবমিট ও প্রকাশ করুন"</strong> বাটনে ক্লিক করলে তা ওয়েবসাইটে দেখা যাবে।
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   {reviews.length === 0 ? (
                     <div className="p-8 text-center bg-[#080d1a] border border-[#1e2f57] rounded-xl text-xs text-[#8e95a7]">
@@ -1512,57 +1541,91 @@ export const AdminModal: React.FC = () => {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {reviews.map((rev) => (
-                        <div
-                          key={rev.id}
-                          className="p-4 rounded-xl bg-[#080d1a] border border-[#1e2f57] space-y-3"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#162344] pb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-sm text-white">{rev.clientName}</span>
-                              {rev.companyOrRole && (
-                                <span className="text-xs text-[#64748b]">({rev.companyOrRole})</span>
-                              )}
-                              <span className="text-[11px] text-[#38bdf8] bg-[#121c38] px-2 py-0.5 rounded border border-[#1e2f57]">
-                                {rev.serviceName}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1">
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                  <Star
-                                    key={s}
-                                    className={`w-3.5 h-3.5 ${
-                                      s <= rev.rating ? 'text-amber-400 fill-amber-400' : 'text-[#334155]'
-                                    }`}
-                                  />
-                                ))}
+                      {reviews.map((rev) => {
+                        const isPending = rev.status === 'pending';
+                        return (
+                          <div
+                            key={rev.id}
+                            className={`p-4 rounded-xl bg-[#080d1a] border space-y-3 ${
+                              isPending ? 'border-amber-500/50 bg-[#0c1428]' : 'border-[#1e2f57]'
+                            }`}
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#162344] pb-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-bold text-sm text-white">{rev.clientName}</span>
+                                {rev.companyOrRole && (
+                                  <span className="text-xs text-[#64748b]">({rev.companyOrRole})</span>
+                                )}
+                                <span className="text-[11px] text-[#38bdf8] bg-[#121c38] px-2 py-0.5 rounded border border-[#1e2f57]">
+                                  {rev.serviceName}
+                                </span>
+                                {isPending ? (
+                                  <span className="text-[10px] font-bold text-amber-300 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-500/40">
+                                    ⏳ অনুমোদনের অপেক্ষায়
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                                    ✓ প্রকাশিত
+                                  </span>
+                                )}
                               </div>
-                              <button
-                                onClick={() => {
-                                  if (confirm('আপনি কি এই রিভিউটি মুছে ফেলতে চান?')) {
-                                    deleteReview(rev.id);
-                                  }
-                                }}
-                                className="p-1 text-[#64748b] hover:text-red-400 rounded transition-colors cursor-pointer"
-                                title="রিভিউ মুছুন"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-0.5 mr-2">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      className={`w-3.5 h-3.5 ${
+                                        s <= rev.rating ? 'text-amber-400 fill-amber-400' : 'text-[#334155]'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+
+                                {isPending && (
+                                  <button
+                                    onClick={() => approveReview(rev.id)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg shadow-sm transition-colors cursor-pointer"
+                                    title="ওয়েবসাইটে প্রকাশ করুন"
+                                  >
+                                    <Check className="w-3.5 h-3.5" />
+                                    <span>সাবমিট ও প্রকাশ করুন</span>
+                                  </button>
+                                )}
+
+                                <button
+                                  onClick={() => {
+                                    if (confirm('আপনি কি এই রিভিউটি মুছে ফেলতে চান?')) {
+                                      deleteReview(rev.id);
+                                    }
+                                  }}
+                                  className="p-1.5 text-[#64748b] hover:text-red-400 bg-[#111a30] rounded-lg transition-colors cursor-pointer"
+                                  title="রিভিউ মুছুন"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <p className="text-xs text-[#cbd5e1] leading-relaxed italic">
+                              "{rev.comment}"
+                            </p>
+
+                            <div className="text-[10px] text-[#64748b] flex items-center justify-between">
+                              <span>তারিখ: {new Date(rev.createdAt).toLocaleString('bn-BD')}</span>
+                              {isPending ? (
+                                <span className="text-amber-400 font-semibold">
+                                  অ্যাডমিন অনুমোদনের অপেক্ষায় (পাবলিক সাইটে লুকানো আছে)
+                                </span>
+                              ) : (
+                                <span className="text-emerald-400 font-semibold">
+                                  ✓ ওয়েবসাইটে সবার জন্য দৃশ্যমান
+                                </span>
+                              )}
                             </div>
                           </div>
-
-                          <p className="text-xs text-[#cbd5e1] leading-relaxed italic">
-                            "{rev.comment}"
-                          </p>
-
-                          <div className="text-[10px] text-[#64748b] flex items-center justify-between">
-                            <span>তারিখ: {new Date(rev.createdAt).toLocaleDateString('bn-BD')}</span>
-                            <span className="text-emerald-400">✓ ওয়েবসাইটে দৃশ্যমান</span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

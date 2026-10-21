@@ -86,13 +86,13 @@ export const Reviews: React.FC = () => {
         <div className="text-center max-w-2xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#162345] border border-[#38bdf8]/30 text-xs font-bold tracking-[0.2em] text-[#38bdf8] uppercase mb-3">
             <Sparkles className="w-3.5 h-3.5 text-[#60a5fa]" />
-            <span>CLIENT REVIEWS & FEEDBACK</span>
+            <span>CLIENT & STUDENT REVIEWS</span>
           </div>
           <h2 className="font-sans text-3xl sm:text-4xl font-extrabold text-[#f1f5f9] tracking-tight">
-            ক্লায়েন্টদের প্রতিক্রিয়া ও রিভিউ
+            ক্লায়েন্ট ও স্টুডেন্টদের প্রতিক্রিয়া ও রিভিউ
           </h2>
           <p className="text-sm sm:text-base text-[#94a3b8] mt-2 leading-relaxed">
-            দেশ-বিদেশের উদ্যোক্তা, প্রতিষ্ঠান ও কনটেন্ট ক্রিয়েটরদের সাথে কাজের বাস্তব অভিজ্ঞতা
+            দেশ-বিদেশের ক্লায়েন্ট, উদ্যোক্তা ও আমাদের স্টুডেন্টদের বাস্তব অভিজ্ঞতা ও মতামত
           </p>
         </div>
 
@@ -110,7 +110,7 @@ export const Reviews: React.FC = () => {
                 <span className="ml-1.5 text-xs font-bold text-amber-400">৫.০ রেটিং</span>
               </div>
               <p className="text-xs text-[#94a3b8]">
-                সর্বমোট <strong className="text-white">{approvedReviews.length} টি রিভিউ</strong> ও সন্তুষ্ট ক্লায়েন্ট
+                সর্বমোট <strong className="text-white">{approvedReviews.length} টি রিভিউ</strong> (ক্লায়েন্ট ও স্টুডেন্ট)
               </p>
             </div>
           </div>
@@ -137,7 +137,7 @@ export const Reviews: React.FC = () => {
             <div className="space-y-1.5">
               <h3 className="text-lg font-bold text-white">এখনো কোনো রিভিউ জমা হয়নি</h3>
               <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed max-w-sm mx-auto">
-                আপনি কি ডিজাইন মহলের মাধ্যমে কোনো ডিজাইন তৈরি করিয়েছেন? আপনার অভিজ্ঞতা শেয়ার করে প্রথম রিভিউটি দিন!
+                আপনি কি ডিজাইন মহলের সম্মানিত ক্লায়েন্ট অথবা স্টুডেন্ট? আপনার অভিজ্ঞতা শেয়ার করে প্রথম রিভিউটি দিন!
               </p>
             </div>
             <button
@@ -256,10 +256,10 @@ export const Reviews: React.FC = () => {
                     আপনার অভিজ্ঞতা শেয়ার করুন
                   </span>
                   <h3 className="text-xl sm:text-2xl font-extrabold text-white mt-1">
-                    একটি ক্লায়েন্ট রিভিউ দিন
+                    ক্লায়েন্ট ও স্টুডেন্ট রিভিউ দিন
                   </h3>
                   <p className="text-xs text-[#94a3b8] mt-1">
-                    ডিজাইন মহলের সাথে কাজের অভিজ্ঞতা কেমন ছিল তা জানান।
+                    ডিজাইন মহলের সাথে আপনার কাজ অথবা শেখার অভিজ্ঞতা কেমন ছিল তা জানান।
                   </p>
                 </div>
 
@@ -300,7 +300,7 @@ export const Reviews: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Client Name */}
+                  {/* Client / Student Name */}
                   <div>
                     <label className="block text-xs font-semibold text-[#cbd5e1] mb-1.5">
                       আপনার নাম *
@@ -310,7 +310,7 @@ export const Reviews: React.FC = () => {
                       <input
                         type="text"
                         required
-                        placeholder="যেমন: তানভীর আহমেদ"
+                        placeholder="আপনার পূর্ণ নাম লিখুন"
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
                         className="w-full pl-9 pr-3.5 py-2.5 bg-[#0a1020] border border-[#1e2f57] focus:border-[#38bdf8] text-sm text-[#f1f5f9] rounded-lg outline-none"
@@ -318,16 +318,16 @@ export const Reviews: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Company or Role */}
+                  {/* Company or Role or Student Batch */}
                   <div>
                     <label className="block text-xs font-semibold text-[#cbd5e1] mb-1.5">
-                      প্রতিষ্ঠান বা পদবি (ঐচ্ছিক)
+                      আপনার পরিচয় / প্রতিষ্ঠান / স্টুডেন্ট ব্যাচ (ঐচ্ছিক)
                     </label>
                     <div className="relative">
                       <Building className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
-                        placeholder="যেমন: সিইও, নক্ষত্র ফ্যাশন বা ইউটিউবার"
+                        placeholder="যেমন: ক্লায়েন্ট / গ্রাফিক ডিজাইন স্টুডেন্ট / প্রতিষ্ঠানের নাম"
                         value={companyOrRole}
                         onChange={(e) => setCompanyOrRole(e.target.value)}
                         className="w-full pl-9 pr-3.5 py-2.5 bg-[#0a1020] border border-[#1e2f57] focus:border-[#38bdf8] text-sm text-[#f1f5f9] rounded-lg outline-none"
@@ -335,10 +335,10 @@ export const Reviews: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Service */}
+                  {/* Service or Course */}
                   <div>
                     <label className="block text-xs font-semibold text-[#cbd5e1] mb-1.5">
-                      কোন সার্ভিসের কাজ করিয়েছেন? *
+                      কোন সার্ভিস বা কোর্সের জন্য রিভিউ দিচ্ছেন? *
                     </label>
                     <div className="relative">
                       <Layers className="w-4 h-4 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -347,12 +347,25 @@ export const Reviews: React.FC = () => {
                         onChange={(e) => setServiceName(e.target.value)}
                         className="w-full pl-9 pr-3.5 py-2.5 bg-[#0a1020] border border-[#1e2f57] focus:border-[#38bdf8] text-sm text-[#f1f5f9] rounded-lg outline-none cursor-pointer"
                       >
-                        {services.map((srv) => (
-                          <option key={srv.id} value={srv.nameBn}>
-                            {srv.nameBn}
+                        <optgroup label="ক্লায়েন্ট ডিজাইন সার্ভিসেস">
+                          {services.map((srv) => (
+                            <option key={srv.id} value={srv.nameBn}>
+                              {srv.nameBn}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="স্টুডেন্ট কোর্স ও প্রশিক্ষণ">
+                          <option value="প্রফেশনাল গ্রাফিক ডিজাইন কোর্স (স্টুডেন্ট)">
+                            প্রফেশনাল গ্রাফিক ডিজাইন কোর্স (স্টুডেন্ট)
                           </option>
-                        ))}
-                        <option value="অন্যান্য গ্রাফিক ডিজাইন">অন্যান্য গ্রাফিক ডিজাইন</option>
+                          <option value="লোগো ও ব্র্যান্ডিং স্পেশাল কোর্স (স্টুডেন্ট)">
+                            লোগো ও ব্র্যান্ডিং স্পেশাল কোর্স (স্টুডেন্ট)
+                          </option>
+                          <option value="পোস্টার ও টাইপোগ্রাফি ডিজাইন প্রশিক্ষণ (স্টুডেন্ট)">
+                            পোস্টার ও টাইপোগ্রাফি ডিজাইন প্রশিক্ষণ (স্টুডেন্ট)
+                          </option>
+                        </optgroup>
+                        <option value="অন্যান্য গ্রাফিক ডিজাইন বা প্রশিক্ষণ">অন্যান্য গ্রাফিক ডিজাইন বা প্রশিক্ষণ</option>
                       </select>
                     </div>
                   </div>
