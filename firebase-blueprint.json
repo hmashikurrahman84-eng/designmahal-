@@ -1,0 +1,126 @@
+{
+  "entities": {
+    "ClientReview": {
+      "title": "ClientReview",
+      "description": "A review submitted by a client or student for Design Mahal.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "clientName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "companyOrRole": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "serviceName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "rating": {
+          "type": "number"
+        },
+        "comment": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "avatarUrl": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "approved"]
+        }
+      },
+      "required": ["id", "clientName", "serviceName", "rating", "comment", "createdAt", "status"]
+    },
+    "OrderRequest": {
+      "title": "OrderRequest",
+      "description": "A design order or project inquiry submitted by a client.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "clientName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "contactMethod": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "contactValue": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "selectedService": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "projectDetails": {
+          "type": "string",
+          "maxLength": 3000
+        },
+        "preferredDeliveryDate": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "createdAt": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      },
+      "required": [
+        "id",
+        "clientName",
+        "contactMethod",
+        "contactValue",
+        "selectedService",
+        "projectDetails",
+        "preferredDeliveryDate",
+        "createdAt",
+        "status"
+      ]
+    }
+  },
+  "firestore": {
+    "/reviews/{reviewId}": {
+      "schema": "ClientReview",
+      "description": "Stores client and student reviews with moderation status."
+    },
+    "/orders/{orderId}": {
+      "schema": "OrderRequest",
+      "description": "Stores client design order requests."
+    }
+  }
+}

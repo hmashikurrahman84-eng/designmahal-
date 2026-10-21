@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { DesignCategory, DesignItem } from '../types';
 import { VectorShowcase } from './VectorShowcase';
@@ -159,7 +159,47 @@ export const AdminModal: React.FC = () => {
   const [adminRevRating, setAdminRevRating] = useState(5);
   const [adminRevComment, setAdminRevComment] = useState('');
 
-  if (!isAdminModalOpen) return null;
+  const pendingReviewsCount = reviews.filter((r) => r.status === 'pending').length;
+
+  // Automatically switch to the 'reviews' tab when opening AdminModal if there are pending reviews waiting
+  useEffect(() => {
+    if (isAdminModalOpen && pendingReviewsCount > 0) {
+      setActiveTab('reviews');
+    }
+  }, [isAdminModalOpen, pendingReviewsCount]);
+
+  if (!isAdminModalOpen) {
+    if (isAdminAuthenticated && pendingReviewsCount > 0) {
+      return (
+        <div className="fixed top-20 right-4 z-50 max-w-sm bg-[#0e162c] border-2 border-amber-500 rounded-2xl shadow-2xl p-4 flex items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <span className="flex h-3 w-3 relative shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+            </span>
+            <div>
+              <p className="text-xs font-extrabold text-amber-300">
+                {pendingReviewsCount}টি নতুন রিভিউ এসেছে!
+              </p>
+              <p className="text-[11px] text-[#cbd5e1]">
+                আপনার অনুমোদনের অপেক্ষায় রয়েছে
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setActiveTab('reviews');
+              setIsAdminModalOpen(true);
+            }}
+            className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold whitespace-nowrap transition-colors cursor-pointer"
+          >
+            দেখুন ও সাবমিট করুন
+          </button>
+        </div>
+      );
+    }
+    return null;
+  }
 
   // Handle Gmail & Password Login
   const handleGmailLogin = (e: React.FormEvent) => {
@@ -1047,7 +1087,23 @@ export const AdminModal: React.FC = () => {
 
             {/* Main Tab Content Area */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[#070c18]">
-              
+              {pendingReviewsCount > 0 && activeTab !== 'reviews' && (
+                <div className="mb-6 p-4 rounded-xl bg-amber-950/40 border-2 border-amber-500/60 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 animate-bounce" />
+                    <span className="text-xs sm:text-sm font-bold text-amber-200">
+                      নতুন নোটিফিকেশন: আপনার কাছে {pendingReviewsCount}টি নতুন ক্লায়েন্ট/স্টুডেন্ট রিভিউ অনুমোদনের অপেক্ষায় এসেছে!
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('reviews')}
+                    className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold transition-colors cursor-pointer"
+                  >
+                    রিভিউ দেখুন ও অনুমোদন করুন →
+                  </button>
+                </div>
+              )}
+
               {/* TAB 1: DESIGNS MANAGER */}
               {activeTab === 'designs' && (
                 <div className="space-y-8">

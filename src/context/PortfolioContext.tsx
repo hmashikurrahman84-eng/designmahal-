@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { AdminAuthResult, AdminUser, DesignItem, ServiceItem, OrderRequest, SiteSettings, ClientReview } from '../types';
 import { INITIAL_ADMIN_USERS, INITIAL_DESIGNS, INITIAL_ORDERS, INITIAL_SERVICES, INITIAL_SETTINGS, INITIAL_REVIEWS } from '../data/initialData';
 
@@ -771,10 +773,16 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const createOrder = (orderData: Omit<OrderRequest, 'id' | 'createdAt' | 'status'>): OrderRequest => {
     const newOrder: OrderRequest = {
-      ...orderData,
       id: `ORD-${Date.now().toString().slice(-6)}`,
+      clientName: (orderData.clientName || '').trim().slice(0, 120) || 'Client',
+      contactMethod: (orderData.contactMethod || 'whatsapp').slice(0, 40) as OrderRequest['contactMethod'],
+      contactValue: (orderData.contactValue || '').trim().slice(0, 150) || 'N/A',
+      selectedService: (orderData.selectedService || 'গ্রাফিক ডিজাইন').trim().slice(0, 150),
+      projectDetails: (orderData.projectDetails || '').trim().slice(0, 3000),
+      preferredDeliveryDate: (orderData.preferredDeliveryDate || 'আলোচনা সাপেক্ষে').trim().slice(0, 100),
       createdAt: new Date().toISOString(),
       status: 'নতুন (New)',
+      ...(orderData.notes ? { notes: orderData.notes.slice(0, 1000) } : {}),
     };
 
     setOrders((prev) => {
@@ -783,6 +791,25 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated));
       } catch {}
       return updated;
+    });
+
+    const firestoreOrder: Record<string, unknown> = {
+      id: newOrder.id,
+      clientName: newOrder.clientName,
+      contactMethod: newOrder.contactMethod,
+      contactValue: newOrder.contactValue,
+      selectedService: newOrder.selectedService,
+      projectDetails: newOrder.projectDetails,
+      preferredDeliveryDate: newOrder.preferredDeliveryDate,
+      createdAt: newOrder.createdAt,
+      status: newOrder.status,
+    };
+    if (newOrder.notes) firestoreOrder.notes = newOrder.notes;
+
+    setDoc(doc(db, 'orders', newOrder.id), firestoreOrder).catch((error: unknown) => {
+      try {
+        handleFirestoreError(error, OperationType.CREATE, `orders/${newOrder.id}`);
+      } catch {}
     });
 
     fetch('/api/orders', {
@@ -805,6 +832,17 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return updated;
     });
 
+    const updatePayload: Record<string, unknown> = { status };
+    if (notes !== undefined) {
+      updatePayload.notes = notes.slice(0, 1000);
+    }
+
+    updateDoc(doc(db, 'orders', id), updatePayload).catch((error) => {
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, `orders/${id}`);
+      } catch {}
+    });
+
     fetch(`/api/orders/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -821,18 +859,35 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return updated;
     });
 
+    deleteDoc(doc(db, 'orders', id)).catch((error) => {
+      try {
+        handleFirestoreError(error, OperationType.DELETE, `orders/${id}`);
+      } catch {}
+    });
+
     fetch(`/api/orders/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     }).catch(() => {});
   };
 
   const addReview = (reviewData: Omit<ClientReview, 'id' | 'createdAt'>): ClientReview => {
+    const cleanRole = reviewData.companyOrRole?.trim().slice(0, 150);
+    const cleanAvatar = reviewData.avatarUrl?.trim().slice(0, 1000);
+    const safeRating = Math.min(5, Math.max(1, Number(reviewData.rating) || 5));
+    const safeStatus: 'pending' | 'approved' =
+      reviewData.status === 'approved' ? 'approved' : 'pending';
+
     const newReview: ClientReview = {
-      ...reviewData,
       id: `rev-${Date.now().toString().slice(-6)}`,
+      clientName: (reviewData.clientName || '').trim().slice(0, 120) || 'সম্মানিত ক্লায়েন্ট',
+      ...(cleanRole ? { companyOrRole: cleanRole } : {}),
+      serviceName: (reviewData.serviceName || 'গ্রাফিক ডিজাইন সার্ভিস').trim().slice(0, 150),
+      rating: safeRating,
+      comment: (reviewData.comment || '').trim().slice(0, 2000),
       createdAt: new Date().toISOString(),
+      ...(cleanAvatar ? { avatarUrl: cleanAvatar } : {}),
       verified: true,
-      status: reviewData.status || 'pending',
+      status: safeStatus,
     };
 
     setReviews((prev) => {
@@ -841,6 +896,25 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(updated));
       } catch {}
       return updated;
+    });
+
+    const firestoreReview: Record<string, unknown> = {
+      id: newReview.id,
+      clientName: newReview.clientName,
+      serviceName: newReview.serviceName,
+      rating: newReview.rating,
+      comment: newReview.comment,
+      createdAt: newReview.createdAt,
+      verified: true,
+      status: safeStatus,
+    };
+    if (cleanRole) firestoreReview.companyOrRole = cleanRole;
+    if (cleanAvatar) firestoreReview.avatarUrl = cleanAvatar;
+
+    setDoc(doc(db, 'reviews', newReview.id), firestoreReview).catch((error) => {
+      try {
+        handleFirestoreError(error, OperationType.CREATE, `reviews/${newReview.id}`);
+      } catch {}
     });
 
     fetch('/api/reviews', {
@@ -863,6 +937,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return updated;
     });
 
+    updateDoc(doc(db, 'reviews', id), { status: 'approved', verified: true }).catch((error) => {
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, `reviews/${id}`);
+      } catch {}
+    });
+
     fetch(`/api/reviews/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -879,52 +959,115 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return updated;
     });
 
+    deleteDoc(doc(db, 'reviews', id)).catch((error) => {
+      try {
+        handleFirestoreError(error, OperationType.DELETE, `reviews/${id}`);
+      } catch {}
+    });
+
     fetch(`/api/reviews/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     }).catch(() => {});
   };
 
-  // Sync orders & reviews from backend API and across tabs
+  // Real-time Firestore onSnapshot + Backend API & Cross-tab Sync for Reviews & Orders
   useEffect(() => {
-    const syncFromBackend = async () => {
-      try {
-        const [ordersRes, reviewsRes] = await Promise.all([
-          fetch('/api/orders'),
-          fetch('/api/reviews'),
-        ]);
-        if (ordersRes.ok) {
-          const serverOrders: OrderRequest[] = await ordersRes.json();
-          if (Array.isArray(serverOrders) && serverOrders.length > 0) {
-            setOrders((prev) => {
-              const map = new Map<string, OrderRequest>();
-              prev.forEach((o) => map.set(o.id, o));
-              serverOrders.forEach((o) => map.set(o.id, o));
-              return Array.from(map.values()).sort(
-                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-              );
-            });
+    let isFirstReviewsSnapshot = true;
+    const reviewsQuery = query(
+      collection(db, 'reviews'),
+      where('status', 'in', ['pending', 'approved'])
+    );
+    const unsubscribeReviews = onSnapshot(
+      reviewsQuery,
+      (snapshot) => {
+        const cloudReviews: ClientReview[] = [];
+        const cloudIds = new Set<string>();
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as ClientReview;
+          if (data && data.id && data.clientName) {
+            cloudReviews.push(data);
+            cloudIds.add(data.id);
           }
-        }
-        if (reviewsRes.ok) {
-          const serverReviews: ClientReview[] = await reviewsRes.json();
-          if (Array.isArray(serverReviews) && serverReviews.length > 0) {
-            setReviews((prev) => {
-              const map = new Map<string, ClientReview>();
-              prev.forEach((r) => map.set(r.id, r));
-              serverReviews.forEach((r) => map.set(r.id, r));
-              return Array.from(map.values()).sort(
-                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-              );
-            });
-          }
-        }
-      } catch {
-        // Ignore network errors if offline
-      }
-    };
+        });
 
-    syncFromBackend();
-    const interval = setInterval(syncFromBackend, 4000);
+        // On first snapshot, if the user had any reviews in localStorage before Firebase was connected, sync them up
+        if (isFirstReviewsSnapshot) {
+          isFirstReviewsSnapshot = false;
+          try {
+            const localSaved = localStorage.getItem(STORAGE_KEYS.REVIEWS);
+            if (localSaved) {
+              const parsedLocal: ClientReview[] = JSON.parse(localSaved);
+              if (Array.isArray(parsedLocal)) {
+                parsedLocal.forEach((lr) => {
+                  if (lr && lr.id && lr.clientName && !cloudIds.has(lr.id)) {
+                    const safeStatus: 'pending' | 'approved' =
+                      lr.status === 'approved' ? 'approved' : 'pending';
+                    const payload: Record<string, unknown> = {
+                      id: lr.id,
+                      clientName: lr.clientName.slice(0, 120),
+                      serviceName: (lr.serviceName || 'গ্রাফিক ডিজাইন সার্ভিস').slice(0, 150),
+                      rating: Math.min(5, Math.max(1, Number(lr.rating) || 5)),
+                      comment: (lr.comment || '').slice(0, 2000),
+                      createdAt: lr.createdAt || new Date().toISOString(),
+                      verified: true,
+                      status: safeStatus,
+                    };
+                    if (lr.companyOrRole) payload.companyOrRole = lr.companyOrRole.slice(0, 150);
+                    if (lr.avatarUrl) payload.avatarUrl = lr.avatarUrl.slice(0, 1000);
+                    cloudReviews.push({ ...(lr as ClientReview), status: safeStatus });
+                    setDoc(doc(db, 'reviews', lr.id), payload).catch(() => {});
+                  }
+                });
+              }
+            }
+          } catch {}
+        }
+
+        cloudReviews.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setReviews(cloudReviews);
+      },
+      (error) => {
+        try {
+          handleFirestoreError(error, OperationType.LIST, 'reviews');
+        } catch {}
+      }
+    );
+
+    const ordersQuery = query(
+      collection(db, 'orders'),
+      where('status', 'in', [
+        'নতুন (New)',
+        'কাজ চলছে (In Progress)',
+        'সম্পন্ন (Completed)',
+        'বাতিল (Cancelled)',
+      ])
+    );
+    const unsubscribeOrders = onSnapshot(
+      ordersQuery,
+      (snapshot) => {
+        const cloudOrders: OrderRequest[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as OrderRequest;
+          if (data && data.id && data.clientName) {
+            cloudOrders.push(data);
+          }
+        });
+        cloudOrders.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setOrders(cloudOrders);
+        try {
+          localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(cloudOrders));
+        } catch {}
+      },
+      (error) => {
+        try {
+          handleFirestoreError(error, OperationType.LIST, 'orders');
+        } catch {}
+      }
+    );
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEYS.REVIEWS && e.newValue) {
@@ -941,7 +1084,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
-      clearInterval(interval);
+      unsubscribeReviews();
+      unsubscribeOrders();
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);

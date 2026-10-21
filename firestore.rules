@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidReview(data) {
+      return data.keys().hasAll(['id', 'clientName', 'serviceName', 'rating', 'comment', 'createdAt', 'status'])
+        && data.keys().hasOnly(['id', 'clientName', 'companyOrRole', 'serviceName', 'rating', 'comment', 'createdAt', 'avatarUrl', 'verified', 'status'])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.clientName is string && data.clientName.size() >= 1 && data.clientName.size() <= 120
+        && (!('companyOrRole' in data) || (data.companyOrRole is string && data.companyOrRole.size() <= 150))
+        && data.serviceName is string && data.serviceName.size() >= 1 && data.serviceName.size() <= 150
+        && data.rating is number && data.rating >= 1 && data.rating <= 5
+        && data.comment is string && data.comment.size() >= 1 && data.comment.size() <= 2000
+        && data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 64
+        && (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 1000))
+        && (!('verified' in data) || data.verified is bool)
+        && data.status is string && (data.status == 'pending' || data.status == 'approved');
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['id', 'clientName', 'contactMethod', 'contactValue', 'selectedService', 'projectDetails', 'preferredDeliveryDate', 'createdAt', 'status'])
+        && data.keys().hasOnly(['id', 'clientName', 'contactMethod', 'contactValue', 'selectedService', 'projectDetails', 'preferredDeliveryDate', 'createdAt', 'status', 'notes', 'referenceImage'])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.clientName is string && data.clientName.size() >= 1 && data.clientName.size() <= 120
+        && data.contactMethod is string && data.contactMethod.size() >= 1 && data.contactMethod.size() <= 40
+        && data.contactValue is string && data.contactValue.size() >= 1 && data.contactValue.size() <= 150
+        && data.selectedService is string && data.selectedService.size() >= 1 && data.selectedService.size() <= 150
+        && data.projectDetails is string && data.projectDetails.size() <= 3000
+        && data.preferredDeliveryDate is string && data.preferredDeliveryDate.size() <= 100
+        && data.createdAt is string && data.createdAt.size() >= 1 && data.createdAt.size() <= 64
+        && data.status is string && data.status.size() >= 1 && data.status.size() <= 60
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000))
+        && (!('referenceImage' in data) || (data.referenceImage is string && data.referenceImage.size() <= 500000));
+    }
+
+    // Connection health check endpoint
+    match /test/{docId} {
+      allow get: if isValidId(docId);
+    }
+
+    // Client & Student Reviews collection
+    match /reviews/{reviewId} {
+      allow get: if isValidId(reviewId);
+      allow list: if resource.data.status in ['pending', 'approved'];
+      allow create: if isValidId(reviewId) && isValidReview(incoming()) && incoming().id == reviewId;
+      allow update: if isValidId(reviewId)
+        && isValidReview(incoming())
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'verified']);
+      allow delete: if isValidId(reviewId);
+    }
+
+    // Client Orders collection
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId);
+      allow list: if resource.data.status in ['নতুন (New)', 'কাজ চলছে (In Progress)', 'সম্পন্ন (Completed)', 'বাতিল (Cancelled)'];
+      allow create: if isValidId(orderId) && isValidOrder(incoming()) && incoming().id == orderId;
+      allow update: if isValidId(orderId)
+        && isValidOrder(incoming())
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes']);
+      allow delete: if isValidId(orderId);
+    }
+  }
+}

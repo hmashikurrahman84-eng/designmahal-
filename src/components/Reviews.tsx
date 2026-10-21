@@ -14,7 +14,16 @@ import {
 } from 'lucide-react';
 
 export const Reviews: React.FC = () => {
-  const { reviews, addReview, services } = usePortfolio();
+  const {
+    reviews,
+    addReview,
+    approveReview,
+    deleteReview,
+    services,
+    settings,
+    isAdminAuthenticated,
+    setIsAdminModalOpen,
+  } = usePortfolio();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clientName, setClientName] = useState('');
@@ -24,10 +33,18 @@ export const Reviews: React.FC = () => {
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [comment, setComment] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [lastSubmittedData, setLastSubmittedData] = useState<{
+    name: string;
+    role: string;
+    service: string;
+    rating: number;
+    comment: string;
+  } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Filter only approved reviews for public view
   const approvedReviews = reviews.filter((r) => r.status === 'approved' || !r.status);
+  const pendingReviews = reviews.filter((r) => r.status === 'pending');
 
   // Compute average rating from approved reviews
   const averageRating =
@@ -48,23 +65,43 @@ export const Reviews: React.FC = () => {
       return;
     }
 
-    addReview({
-      clientName: clientName.trim(),
-      companyOrRole: companyOrRole.trim() || undefined,
-      serviceName: serviceName || 'গ্রাফিক ডিজাইন সার্ভিস',
+    const cleanData = {
+      name: clientName.trim().slice(0, 120),
+      role: companyOrRole.trim().slice(0, 150),
+      service: (serviceName || 'গ্রাফিক ডিজাইন সার্ভিস').slice(0, 150),
       rating,
-      comment: comment.trim(),
+      comment: comment.trim().slice(0, 2000),
+    };
+
+    addReview({
+      clientName: cleanData.name,
+      companyOrRole: cleanData.role || undefined,
+      serviceName: cleanData.service,
+      rating: cleanData.rating,
+      comment: cleanData.comment,
     });
 
+    setLastSubmittedData(cleanData);
     setIsSubmitted(true);
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setIsModalOpen(false);
-      setClientName('');
-      setCompanyOrRole('');
-      setComment('');
-      setRating(5);
-    }, 3200);
+    setClientName('');
+    setCompanyOrRole('');
+    setComment('');
+    setRating(5);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setIsSubmitted(false);
+    setErrorMessage(null);
+  };
+
+  const getWhatsAppNotifyUrl = () => {
+    if (!lastSubmittedData) return '#';
+    const rawPhone = (settings.whatsappNumber || '8801629947628').replace(/[^0-9]/g, '');
+    const text = `আসসালামু আলাইকুম! আমি ডিজাইন মহল ওয়েবসাইটে একটি নতুন রিভিউ জমা দিয়েছি।\n\nনাম: ${lastSubmittedData.name}${
+      lastSubmittedData.role ? `\nপরিচয়: ${lastSubmittedData.role}` : ''
+    }\nসার্ভিস/কোর্স: ${lastSubmittedData.service}\nরেটিং: ${lastSubmittedData.rating} স্টার ⭐\nমতামত: "${lastSubmittedData.comment}"`;
+    return `https://wa.me/${rawPhone}?text=${encodeURIComponent(text)}`;
   };
 
   const ratingDescriptions: Record<number, string> = {
@@ -96,6 +133,66 @@ export const Reviews: React.FC = () => {
           </p>
         </div>
 
+        {/* Admin-Only Live Pending Review Inbox Alert (Strictly hidden for normal visitors) */}
+        {isAdminAuthenticated && pendingReviews.length > 0 && (
+          <div className="max-w-4xl mx-auto mb-8 p-5 rounded-2xl bg-amber-950/30 border-2 border-amber-500/50 shadow-xl space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-3 w-3 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                </span>
+                <h3 className="text-sm sm:text-base font-extrabold text-amber-300">
+                  অ্যাডমিন নোটিফিকেশন: {pendingReviews.length} টি নতুন রিভিউ আপনার অনুমোদনের অপেক্ষায় এসেছে!
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsAdminModalOpen(true)}
+                className="px-3.5 py-1.5 rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold transition-colors cursor-pointer"
+              >
+                অ্যাডমিন প্যানেলে দেখুন
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              {pendingReviews.map((rev) => (
+                <div
+                  key={rev.id}
+                  className="p-3.5 rounded-xl bg-[#090f1f] border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                >
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs sm:text-sm font-bold text-white">{rev.clientName}</span>
+                      {rev.companyOrRole && (
+                        <span className="text-xs text-[#94a3b8]">({rev.companyOrRole})</span>
+                      )}
+                      <span className="px-2 py-0.5 text-[10px] font-semibold bg-[#121c38] text-[#38bdf8] rounded border border-[#1e2f57]">
+                        {rev.serviceName}
+                      </span>
+                      <span className="text-xs text-amber-400 font-bold">★ {rev.rating}.0</span>
+                    </div>
+                    <p className="text-xs text-[#cbd5e1] italic">"{rev.comment}"</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => approveReview(rev.id)}
+                      className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      ✓ সাবমিট ও প্রকাশ করুন
+                    </button>
+                    <button
+                      onClick={() => deleteReview(rev.id)}
+                      className="px-2.5 py-2 rounded-lg bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-500/30 text-xs font-semibold transition-colors cursor-pointer"
+                    >
+                      মুছুন
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Rating Summary Bar */}
         <div className="max-w-4xl mx-auto mb-12 p-6 rounded-2xl bg-gradient-to-r from-[#0d152a] via-[#0f1b36] to-[#0d152a] border border-[#1e2f57] shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
@@ -118,7 +215,10 @@ export const Reviews: React.FC = () => {
           <div className="flex items-center gap-4">
             <div className="icon-underlight-glow">
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  setIsSubmitted(false);
+                  setIsModalOpen(true);
+                }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#2563eb] via-[#3b82f6] to-[#60a5fa] hover:from-[#1d4ed8] hover:to-[#3b82f6] shadow-lg shadow-[#1d4ed8]/40 transition-all cursor-pointer active:scale-95"
               >
                 <MessageSquarePlus className="w-4 h-4" />
@@ -135,13 +235,16 @@ export const Reviews: React.FC = () => {
               <Star className="w-7 h-7 text-[#38bdf8]" />
             </div>
             <div className="space-y-1.5">
-              <h3 className="text-lg font-bold text-white">এখনো কোনো রিভিউ জমা হয়নি</h3>
+              <h3 className="text-lg font-bold text-white">এখনো কোনো রিভিউ প্রকাশিত হয়নি</h3>
               <p className="text-xs sm:text-sm text-[#94a3b8] leading-relaxed max-w-sm mx-auto">
                 আপনি কি ডিজাইন মহলের সম্মানিত ক্লায়েন্ট অথবা স্টুডেন্ট? আপনার অভিজ্ঞতা শেয়ার করে প্রথম রিভিউটি দিন!
               </p>
             </div>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setIsSubmitted(false);
+                setIsModalOpen(true);
+              }}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#2563eb] to-[#3b82f6] hover:from-[#1d4ed8] hover:to-[#2563eb] transition-all cursor-pointer shadow-md shadow-[#2563eb]/20"
             >
               <MessageSquarePlus className="w-4 h-4" />
@@ -231,22 +334,54 @@ export const Reviews: React.FC = () => {
             
             {/* Close Button */}
             <button
-              onClick={() => setIsModalOpen(false)}
+              onClick={handleCloseModal}
               className="absolute top-4 right-4 p-2 text-[#94a3b8] hover:text-white rounded-lg hover:bg-[#162345] transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             {isSubmitted ? (
-              <div className="py-8 text-center space-y-4">
+              <div className="py-6 text-center space-y-5">
                 <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center">
                   <CheckCircle2 className="w-8 h-8 text-emerald-400" />
                 </div>
-                <div className="space-y-1.5">
-                  <h3 className="text-xl font-bold text-white">ধন্যবাদ! রিভিউটি জমা হয়েছে</h3>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold text-white">ধন্যবাদ! রিভিউটি অ্যাডমিনের কাছে পাঠানো হয়েছে</h3>
                   <p className="text-xs sm:text-sm text-[#94a3b8] max-w-sm mx-auto leading-relaxed">
-                    আপনার রিভিউটি অ্যাডমিন পর্যালোচনার জন্য জমা রাখা হয়েছে। অ্যাডমিন অনুমোদন করার পর এটি ওয়েবসাইটে প্রকাশিত হবে।
+                    আপনার রিভিউটি সফলভাবে জমা হয়েছে এবং অ্যাডমিনের ড্যাশবোর্ডে নোটিফিকেশন চলে গেছে। অ্যাডমিন অনুমোদন করার সাথে সাথেই এটি ওয়েবসাইটে প্রকাশিত হবে।
                   </p>
+                </div>
+
+                <div className="flex flex-col gap-2.5 max-w-xs mx-auto pt-2">
+                  {isAdminAuthenticated && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleCloseModal();
+                        setIsAdminModalOpen(true);
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-colors cursor-pointer shadow-lg"
+                    >
+                      অ্যাডমিন প্যানেল থেকে এখনই অনুমোদন করুন
+                    </button>
+                  )}
+
+                  <a
+                    href={getWhatsAppNotifyUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-[#4ade80] font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    <span>চাইলে WhatsApp-এও অ্যাডমিনকে জানান (ঐচ্ছিক)</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="w-full py-2.5 px-4 rounded-xl bg-[#162345] hover:bg-[#1e2f57] text-white font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    ঠিক আছে, বন্ধ করুন
+                  </button>
                 </div>
               </div>
             ) : (
