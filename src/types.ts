@@ -93,3 +93,16 @@ export interface AdminAuthResult {
   error?: string;
   message?: string;
 }
+
+export interface ClientReview {
+  id: string;
+  clientName: string;
+  companyOrRole?: string;
+  serviceName: string;
+  rating: number; // 1 - 5
+  comment: string;
+  avatarUrl?: string;
+  createdAt: string;
+  verified?: boolean;
+  status?: 'pending' | 'approved';
+}

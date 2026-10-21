@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { DesignCategory, DesignItem } from '../types';
 import { VectorShowcase } from './VectorShowcase';
-import { OrdersDashboard } from './OrdersDashboard';
 import {
   Shield,
   X,
@@ -32,6 +31,7 @@ import {
   LogIn,
   ExternalLink,
   Sparkles,
+  Star,
   Check,
   ChevronRight,
 } from 'lucide-react';
@@ -63,6 +63,8 @@ export const AdminModal: React.FC = () => {
     orders,
     updateOrderStatus,
     deleteOrder,
+    reviews,
+    deleteReview,
     settings,
     updateSettings,
     exportDatabaseJSON,
@@ -113,7 +115,7 @@ export const AdminModal: React.FC = () => {
   const [isAuthLoading, setIsAuthLoading] = useState(false);
 
   // Active Admin Tab
-  const [activeTab, setActiveTab] = useState<'designs' | 'services' | 'orders' | 'settings' | 'backup'>('designs');
+  const [activeTab, setActiveTab] = useState<'designs' | 'services' | 'orders' | 'reviews' | 'settings' | 'backup'>('designs');
 
   // Design Form State (for Add / Edit)
   const [isEditingDesign, setIsEditingDesign] = useState<string | null>(null);
@@ -980,6 +982,18 @@ export const AdminModal: React.FC = () => {
               </button>
 
               <button
+                onClick={() => setActiveTab('reviews')}
+                className={`flex items-center gap-2.5 px-3 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${
+                  activeTab === 'reviews'
+                    ? 'bg-[#2563eb] text-white shadow-md shadow-[#2563eb]/25'
+                    : 'text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#121c38]'
+                }`}
+              >
+                <Star className="w-4 h-4" />
+                <span>ক্লায়েন্ট রিভিউ ({reviews.length})</span>
+              </button>
+
+              <button
                 onClick={() => setActiveTab('settings')}
                 className={`flex items-center gap-2.5 px-3 py-2 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${
                   activeTab === 'settings'
@@ -1359,10 +1373,198 @@ export const AdminModal: React.FC = () => {
                 </div>
               )}
 
-              {/* TAB 3: ORDERS INBOX & FULL DASHBOARD */}
+              {/* TAB 3: ORDERS INBOX */}
               {activeTab === 'orders' && (
-                <div className="pt-2">
-                  <OrdersDashboard />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#1b2a4e] pb-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-[#f1f5f9]">ক্লায়েন্টদের অর্ডার ইনবক্স</h4>
+                      <p className="text-xs text-[#8e95a7] mt-0.5">
+                        ওয়েবসাইট থেকে ক্লায়েন্টদের পাঠানো রিকোয়েস্ট ও অর্ডার তালিকা
+                      </p>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#1d4ed8]/30 text-[#38bdf8] border border-[#38bdf8]/30">
+                      মোট অর্ডার: {orders.length}
+                    </span>
+                  </div>
+
+                  {orders.length === 0 ? (
+                    <div className="p-8 text-center bg-[#080d1a] border border-[#1e2f57] rounded-xl text-xs text-[#8e95a7]">
+                      এখনো কোনো অর্ডার জমা হয়নি।
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {orders.map((ord) => (
+                        <div
+                          key={ord.id}
+                          className="p-4 rounded-xl bg-[#080d1a] border border-[#1e2f57] space-y-3"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#162344] pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs font-bold text-[#38bdf8]">
+                                #{ord.id}
+                              </span>
+                              <span className="text-[11px] text-[#64748b]">
+                                {new Date(ord.createdAt).toLocaleString('bn-BD')}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={ord.status}
+                                onChange={(e) =>
+                                  updateOrderStatus(ord.id, e.target.value as any)
+                                }
+                                className={`text-xs px-2.5 py-1 rounded-md font-semibold border outline-none cursor-pointer ${
+                                  ord.status === 'নতুন (New)'
+                                    ? 'bg-amber-950/40 text-amber-300 border-amber-500/40'
+                                    : ord.status === 'কাজ চলছে (In Progress)'
+                                    ? 'bg-blue-950/40 text-blue-300 border-blue-500/40'
+                                    : ord.status === 'সম্পন্ন (Completed)'
+                                    ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/40'
+                                    : 'bg-red-950/40 text-red-300 border-red-500/40'
+                                }`}
+                              >
+                                <option value="নতুন (New)">নতুন (New)</option>
+                                <option value="কাজ চলছে (In Progress)">কাজ চলছে (In Progress)</option>
+                                <option value="সম্পন্ন (Completed)">সম্পন্ন (Completed)</option>
+                                <option value="বাতিল (Cancelled)">বাতিল (Cancelled)</option>
+                              </select>
+
+                              <button
+                                onClick={() => {
+                                  if (confirm('আপনি কি এই অর্ডারটি মুছে ফেলতে চান?')) {
+                                    deleteOrder(ord.id);
+                                  }
+                                }}
+                                className="p-1 text-[#64748b] hover:text-red-400 rounded transition-colors cursor-pointer"
+                                title="অর্ডার মুছুন"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <span className="text-[#64748b]">ক্লায়েন্টের নাম: </span>
+                              <span className="font-bold text-[#f1f5f9]">{ord.clientName}</span>
+                            </div>
+                            <div>
+                              <span className="text-[#64748b]">যোগাযোগ ({ord.contactMethod}): </span>
+                              <span className="font-bold text-[#38bdf8]">{ord.contactValue}</span>
+                            </div>
+                            <div>
+                              <span className="text-[#64748b]">সার্ভিস: </span>
+                              <span className="text-[#cbd5e1]">{ord.selectedService}</span>
+                            </div>
+                            <div>
+                              <span className="text-[#64748b]">ডেলিভারি সময়: </span>
+                              <span className="text-amber-400">{ord.preferredDeliveryDate}</span>
+                            </div>
+                          </div>
+
+                          {ord.projectDetails && (
+                            <div className="p-2.5 rounded bg-[#050812] border border-[#141f3d] text-xs text-[#cbd5e1] leading-relaxed">
+                              <span className="text-[#64748b] block mb-1 font-semibold">কাজের বিবরণ:</span>
+                              {ord.projectDetails}
+                            </div>
+                          )}
+
+                          {ord.contactValue && (
+                            <div className="flex items-center gap-2 pt-1">
+                              <a
+                                href={`https://wa.me/${ord.contactValue.replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#080d1a] bg-[#25D366] hover:bg-[#20ba5a] rounded-md transition-colors cursor-pointer"
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" />
+                                <span>WhatsApp-এ চ্যাট করুন</span>
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB: REVIEWS MANAGER */}
+              {activeTab === 'reviews' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#1b2a4e] pb-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-[#f1f5f9]">ক্লায়েন্ট রিভিউ ও ফিডব্যাক</h4>
+                      <p className="text-xs text-[#8e95a7] mt-0.5">
+                        ওয়েবসাইট থেকে ক্লায়েন্টদের দেওয়া রিভিউ ও রেটিং ব্যবস্থাপনা
+                      </p>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#1d4ed8]/30 text-[#38bdf8] border border-[#38bdf8]/30">
+                      মোট রিভিউ: {reviews.length}
+                    </span>
+                  </div>
+
+                  {reviews.length === 0 ? (
+                    <div className="p-8 text-center bg-[#080d1a] border border-[#1e2f57] rounded-xl text-xs text-[#8e95a7]">
+                      এখনো কোনো রিভিউ জমা হয়নি।
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {reviews.map((rev) => (
+                        <div
+                          key={rev.id}
+                          className="p-4 rounded-xl bg-[#080d1a] border border-[#1e2f57] space-y-3"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#162344] pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm text-white">{rev.clientName}</span>
+                              {rev.companyOrRole && (
+                                <span className="text-xs text-[#64748b]">({rev.companyOrRole})</span>
+                              )}
+                              <span className="text-[11px] text-[#38bdf8] bg-[#121c38] px-2 py-0.5 rounded border border-[#1e2f57]">
+                                {rev.serviceName}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`w-3.5 h-3.5 ${
+                                      s <= rev.rating ? 'text-amber-400 fill-amber-400' : 'text-[#334155]'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <button
+                                onClick={() => {
+                                  if (confirm('আপনি কি এই রিভিউটি মুছে ফেলতে চান?')) {
+                                    deleteReview(rev.id);
+                                  }
+                                }}
+                                className="p-1 text-[#64748b] hover:text-red-400 rounded transition-colors cursor-pointer"
+                                title="রিভিউ মুছুন"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-[#cbd5e1] leading-relaxed italic">
+                            "{rev.comment}"
+                          </p>
+
+                          <div className="text-[10px] text-[#64748b] flex items-center justify-between">
+                            <span>তারিখ: {new Date(rev.createdAt).toLocaleDateString('bn-BD')}</span>
+                            <span className="text-emerald-400">✓ ওয়েবসাইটে দৃশ্যমান</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

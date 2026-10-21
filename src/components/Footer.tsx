@@ -75,9 +75,9 @@ export const Footer: React.FC = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="icon-light-orbit cursor-pointer"
-                    title="ইন্টারনেট / Behance"
+                    title="Behance"
                   >
-                    <div className="icon-light-orbit-inner p-2.5 text-[#cbd5e1] hover:text-[#38bdf8]">
+                    <div className="icon-light-orbit-inner p-2.5 text-[#cbd5e1] hover:text-[#0057ff]">
                       <Globe className="w-4 h-4" />
                     </div>
                   </a>
@@ -95,6 +95,7 @@ export const Footer: React.FC = () => {
               <a href="#home" className="hover:text-[#38bdf8] transition-colors">হোম</a>
               <a href="#portfolio" className="hover:text-[#38bdf8] transition-colors">পোর্টফোলিও</a>
               <a href="#services" className="hover:text-[#38bdf8] transition-colors">সার্ভিসেস</a>
+              <a href="#reviews" className="hover:text-[#38bdf8] transition-colors">রিভিউ</a>
               <a href="#skills" className="hover:text-[#38bdf8] transition-colors">দক্ষতা</a>
               <a href="#order" className="hover:text-[#38bdf8] transition-colors">অর্ডার করুন</a>
               <a href="#contact" className="hover:text-[#38bdf8] transition-colors">যোগাযোগ</a>
@@ -159,15 +160,6 @@ export const Footer: React.FC = () => {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#64748b]">
           <div className="flex items-center gap-2">
             <span>© {new Date().getFullYear()} {settings.brandName}. সর্বস্বত্ব সংরক্ষিত।</span>
-            {/* Subtle owner lock trigger */}
-            <button
-              onClick={() => setIsAdminModalOpen(true)}
-              title="মালিকের সিকিউর এক্সেস"
-              aria-label="Admin Access"
-              className="p-1 rounded opacity-25 hover:opacity-100 hover:text-[#38bdf8] transition-all cursor-pointer"
-            >
-              <Lock className="w-3 h-3" />
-            </button>
           </div>
           <button
             onClick={scrollToTop}

@@ -37,44 +37,7 @@ export const INITIAL_ADMIN_USERS: AdminUser[] = [
   },
 ];
 
-export const INITIAL_ORDERS: OrderRequest[] = [
-  {
-    id: 'ORD-892104',
-    createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
-    clientName: 'তানভীর আহমেদ',
-    contactMethod: 'whatsapp',
-    contactValue: '+880 1712-345678',
-    selectedService: 'প্রফেশনাল লোগো ডিজাইন',
-    projectDetails: 'আমাদের নতুন ই-কমার্স ব্র্যান্ড "নক্ষত্র ফ্যাশন" এর জন্য একটি মিনিমালিস্ট ও লাক্সারি গোল্ডেন মনোগ্রাম লোগো প্রয়োজন। ভেক্টর সোর্স ফাইল (.AI, .EPS) সহ দ্রুত ডেলিভারি চাই।',
-    preferredDeliveryDate: '২ দিনের মধ্যে',
-    status: 'নতুন (New)',
-    notes: 'ক্লায়েন্টের সাথে হোয়াটসঅ্যাপে প্রথম কথা হয়েছে। কালার প্যালেট পাঠাতে হবে।',
-  },
-  {
-    id: 'ORD-761920',
-    createdAt: new Date(Date.now() - 3600000 * 22).toISOString(),
-    clientName: 'মাওলানা কামরুল হাসান',
-    contactMethod: 'whatsapp',
-    contactValue: '+880 1898-765432',
-    selectedService: 'ইসলামিক পোষ্টার ডিজাইন',
-    projectDetails: 'বার্ষিক তাফসিরুল কুরআন মাহফিলের আকর্ষণীয় ১০ কালার প্রিন্ট-রেডি পোস্টার ডিজাইন লাগবে। প্রধান মেহমান ও বিশেষ বক্তাদের নাম সুন্দর ক্যালিগ্রাফিতে বসাতে হবে।',
-    preferredDeliveryDate: 'আগামীকাল বিকেল',
-    status: 'কাজ চলছে (In Progress)',
-    notes: 'ড্রাফট কনসেপ্ট তৈরি সম্পন্ন, ব্যাকগ্রাউন্ড কালার ফাইনাল করা বাকি।',
-  },
-  {
-    id: 'ORD-654311',
-    createdAt: new Date(Date.now() - 3600000 * 68).toISOString(),
-    clientName: 'মাহমুদুল করিম',
-    contactMethod: 'whatsapp',
-    contactValue: '+880 1911-223344',
-    selectedService: 'ব্র্যান্ডিং আইডেন্টিটি প্যাকেজ',
-    projectDetails: 'বিজনেস কার্ড, লেটারহেড, এনভেলাপ ও সোশ্যাল মিডিয়া পোস্ট টেমপ্লেট সহ পূর্ণাঙ্গ ব্র্যান্ডিং সল্যুশন।',
-    preferredDeliveryDate: '৫ দিন',
-    status: 'সম্পন্ন (Completed)',
-    notes: 'ফাইনাল ফাইল ক্লায়েন্টকে গুগল ড্রাইভে হস্তান্তর করা হয়েছে।',
-  },
-];
+export const INITIAL_ORDERS: OrderRequest[] = [];
 
 export const INITIAL_DESIGNS: DesignItem[] = [
   {
@@ -305,3 +268,6 @@ export const INITIAL_SERVICES: ServiceItem[] = [
     iconName: 'BadgeCheck',
   },
 ];
+
+export const INITIAL_REVIEWS: import('../types').ClientReview[] = [];
+

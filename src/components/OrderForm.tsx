@@ -116,17 +116,7 @@ ${projectDetails}
 
       setGeneratedOrderNo(newOrder.id);
       setIsSubmitted(true);
-
-      // If user chose WhatsApp or clicks direct WhatsApp action, open WhatsApp
-      const waUrl = buildWhatsAppUrl(newOrder.id);
-      window.open(waUrl, '_blank', 'noopener,noreferrer');
-
-      if (onSuccess) {
-        // give user a moment to see success confirmation
-        setTimeout(() => {
-          onSuccess();
-        }, 3500);
-      }
+      // No automatic window.open or auto-close timeout: keeps client on site and saves order safely
     } catch (err) {
       setErrorWarning('অর্ডার জমা দিতে সমস্যা হয়েছে। দয়া করে পুনরায় চেষ্টা করুন।');
     }
@@ -134,30 +124,57 @@ ${projectDetails}
 
   if (isSubmitted && generatedOrderNo) {
     return (
-      <div className="p-6 sm:p-8 text-center space-y-4 bg-[#0e162c] rounded-xl border border-[#1b2a4e]">
-        <div className="w-14 h-14 mx-auto rounded-full bg-[#1d4ed8]/20 border border-[#38bdf8] flex items-center justify-center">
-          <CheckCircle className="w-8 h-8 text-[#38bdf8]" />
+      <div className="p-6 sm:p-8 text-center space-y-5 bg-[#0a1020] rounded-2xl border border-emerald-500/40 shadow-2xl animate-fadeIn">
+        <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center">
+          <CheckCircle className="w-9 h-9 text-emerald-400" />
         </div>
-        <h3 className="font-sans text-2xl font-bold text-[#f1f5f9]">
-          ধন্যবাদ! অর্ডার সফলভাবে জমা হয়েছে
-        </h3>
-        <p className="text-sm text-[#cbd5e1]">
-          অর্ডার রেফারেন্স নম্বর: <strong className="text-[#38bdf8]">#{generatedOrderNo}</strong>
-        </p>
-        <p className="text-xs sm:text-sm text-[#94a3b8] max-w-md mx-auto leading-relaxed">
-          আপনার অর্ডারটি আমাদের সিস্টেমে সংরক্ষিত হয়েছে এবং আপনার WhatsApp উইন্ডো খোলা হয়েছে। অতি দ্রুত ডিজাইনার আপনার সাথে যোগাযোগ করবেন।
+        <div className="space-y-1">
+          <span className="inline-block px-3 py-1 text-[11px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 rounded-full uppercase tracking-wider mb-1">
+            ✓ অর্ডার নিশ্চিত ও সংরক্ষিত
+          </span>
+          <h3 className="font-sans text-2xl font-extrabold text-[#f1f5f9]">
+            ধন্যবাদ! আপনার অর্ডার সফলভাবে জমা হয়েছে
+          </h3>
+          <p className="text-sm text-[#cbd5e1]">
+            অর্ডার রেফারেন্স নম্বর: <span className="font-mono font-bold text-[#38bdf8] text-base">#{generatedOrderNo}</span>
+          </p>
+        </div>
+
+        {/* Order Summary Box */}
+        <div className="max-w-md mx-auto p-4 rounded-xl bg-[#0e162c] border border-[#1b2a4e] text-left text-xs space-y-2 text-[#cbd5e1]">
+          <div className="flex justify-between border-b border-[#162344] pb-1.5">
+            <span className="text-[#64748b]">ক্লায়েন্টের নাম:</span>
+            <span className="font-semibold text-white">{clientName}</span>
+          </div>
+          <div className="flex justify-between border-b border-[#162344] pb-1.5">
+            <span className="text-[#64748b]">নির্বাচিত সার্ভিস:</span>
+            <span className="font-semibold text-[#38bdf8]">{selectedService}</span>
+          </div>
+          <div className="flex justify-between border-b border-[#162344] pb-1.5">
+            <span className="text-[#64748b]">যোগাযোগ ({contactMethod}):</span>
+            <span className="font-semibold text-white">{contactValue}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-[#64748b]">ডেলিভারি সময়:</span>
+            <span className="font-semibold text-amber-400">{preferredDeliveryDate || 'আলোচনা সাপেক্ষে'}</span>
+          </div>
+        </div>
+
+        <p className="text-xs text-[#94a3b8] max-w-md mx-auto leading-relaxed">
+          আপনার অর্ডারটি সরাসরি আমাদের ওয়েবসাইটের কন্ট্রোল প্যানেলে পৌঁছে গেছে। ডিজাইনার অতি দ্রুত আপনার সাথে যোগাযোগ করবেন।
         </p>
 
-        <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           <a
             href={buildWhatsAppUrl(generatedOrderNo)}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-bold text-[#080d1a] bg-[#25D366] hover:bg-[#20ba5a] rounded-lg transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-bold text-[#080d1a] bg-[#25D366] hover:bg-[#20ba5a] rounded-lg transition-all shadow-md shadow-[#25D366]/20 cursor-pointer"
           >
             <MessageSquare className="w-4 h-4" />
-            WhatsApp-এ মেসেজ পাঠান
+            <span>হোয়াটসঅ্যাপে কপি পাঠান (ঐচ্ছিক)</span>
           </a>
+          
           <button
             onClick={() => {
               setIsSubmitted(false);
@@ -165,8 +182,9 @@ ${projectDetails}
               setContactValue('');
               setProjectDetails('');
               setReferenceImages([]);
+              if (onSuccess) onSuccess();
             }}
-            className="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-[#cbd5e1] hover:text-white bg-[#121c38] rounded-lg border border-[#1e2f57]"
+            className="w-full sm:w-auto px-5 py-2.5 text-xs font-semibold text-[#cbd5e1] hover:text-white bg-[#121c38] hover:bg-[#162345] rounded-lg border border-[#1e2f57] transition-colors cursor-pointer"
           >
             আরেকটি অর্ডার করুন
           </button>

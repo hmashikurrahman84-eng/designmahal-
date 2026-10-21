@@ -17,7 +17,7 @@ import {
 import { formatWhatsAppNumber } from '../utils/whatsapp';
 
 export const Contact: React.FC = () => {
-  const { settings } = usePortfolio();
+  const { settings, createOrder } = usePortfolio();
 
   const [senderName, setSenderName] = useState('');
   const [senderContact, setSenderContact] = useState('');
@@ -31,20 +31,17 @@ export const Contact: React.FC = () => {
       return;
     }
 
-    // Direct WhatsApp redirection with user contact message
-    const cleanPhone = formatWhatsAppNumber(settings.whatsappNumber);
-    const waText = `*Design Mahal - সাধারণ অনুসন্ধান বার্তা* 💬
-👤 প্রেরক: ${senderName}
-📞 যোগাযোগ: ${senderContact}
-📝 বার্তা:
-${senderMessage}`;
-
-    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`, '_blank', 'noopener,noreferrer');
+    // Save inquiry to orders database so it appears in the owner's dashboard
+    createOrder({
+      clientName: senderName.trim(),
+      contactMethod: senderContact.includes('@') ? 'email' : 'phone',
+      contactValue: senderContact.trim(),
+      selectedService: 'সাধারণ অনুসন্ধান ও বার্তা',
+      projectDetails: senderMessage.trim(),
+      preferredDeliveryDate: 'যত দ্রুত সম্ভব',
+    });
 
     setFeedbackStatus('success');
-    setSenderName('');
-    setSenderContact('');
-    setSenderMessage('');
   };
 
   return (
@@ -212,18 +209,40 @@ ${senderMessage}`;
             </p>
 
             {feedbackStatus === 'success' ? (
-              <div className="p-6 text-center space-y-3 bg-[#0a1020] border border-[#38bdf8]/40 rounded-xl">
-                <CheckCircle2 className="w-10 h-10 text-[#38bdf8] mx-auto" />
-                <h4 className="text-base font-bold text-[#f1f5f9]">বার্তা তৈরি করা হয়েছে</h4>
-                <p className="text-xs text-[#94a3b8]">
-                  আপনার বার্তাটি WhatsApp-এ খোলার জন্য প্রস্তুত করা হয়েছে। ধন্যবাদ!
-                </p>
-                <button
-                  onClick={() => setFeedbackStatus(null)}
-                  className="px-4 py-1.5 text-xs font-bold text-white bg-[#2563eb] rounded-md"
-                >
-                  আরেকটি বার্তা লিখুন
-                </button>
+              <div className="p-6 text-center space-y-4 bg-[#0a1020] border border-emerald-500/40 rounded-xl shadow-lg animate-fadeIn">
+                <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500 flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-base font-bold text-[#f1f5f9]">বার্তা সফলভাবে জমা হয়েছে</h4>
+                  <p className="text-xs text-[#94a3b8] max-w-sm mx-auto leading-relaxed">
+                    আপনার বার্তাটি সরাসরি ওয়েবসাইটের কন্ট্রোল প্যানেলে সংরক্ষিত হয়েছে। ডিজাইনার অতি দ্রুত আপনার সাথে যোগাযোগ করবেন।
+                  </p>
+                </div>
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+                  <a
+                    href={`https://wa.me/${formatWhatsAppNumber(settings.whatsappNumber)}?text=${encodeURIComponent(
+                      `*Design Mahal - বার্তা* 💬\nনাম: ${senderName}\nযোগাযোগ: ${senderContact}\nবার্তা: ${senderMessage}`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold text-[#080d1a] bg-[#25D366] hover:bg-[#20ba5a] rounded-lg transition-colors cursor-pointer"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>হোয়াটসঅ্যাপেও কপি পাঠান (ঐচ্ছিক)</span>
+                  </a>
+                  <button
+                    onClick={() => {
+                      setFeedbackStatus(null);
+                      setSenderName('');
+                      setSenderContact('');
+                      setSenderMessage('');
+                    }}
+                    className="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-[#cbd5e1] hover:text-white bg-[#162345] rounded-lg border border-[#1e2f57] cursor-pointer"
+                  >
+                    আরেকটি বার্তা পাঠান
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSendMessage} className="space-y-4">

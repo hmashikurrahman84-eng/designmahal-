@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AdminAuthResult, AdminUser, DesignItem, ServiceItem, OrderRequest, SiteSettings } from '../types';
-import { INITIAL_ADMIN_USERS, INITIAL_DESIGNS, INITIAL_ORDERS, INITIAL_SERVICES, INITIAL_SETTINGS } from '../data/initialData';
+import { AdminAuthResult, AdminUser, DesignItem, ServiceItem, OrderRequest, SiteSettings, ClientReview } from '../types';
+import { INITIAL_ADMIN_USERS, INITIAL_DESIGNS, INITIAL_ORDERS, INITIAL_SERVICES, INITIAL_SETTINGS, INITIAL_REVIEWS } from '../data/initialData';
 
 interface PortfolioContextType {
   designs: DesignItem[];
   services: ServiceItem[];
   orders: OrderRequest[];
+  reviews: ClientReview[];
   settings: SiteSettings;
   activeDesignModal: DesignItem | null;
   setActiveDesignModal: (design: DesignItem | null) => void;
@@ -33,8 +34,6 @@ interface PortfolioContextType {
   lockoutUntil: number | null;
   isGuideModalOpen: boolean;
   setIsGuideModalOpen: (open: boolean) => void;
-  isOrderDashboardOpen: boolean;
-  setIsOrderDashboardOpen: (open: boolean) => void;
   
   // Actions
   addDesign: (design: Omit<DesignItem, 'id'>) => DesignItem;
@@ -48,8 +47,10 @@ interface PortfolioContextType {
   createOrder: (orderData: Omit<OrderRequest, 'id' | 'createdAt' | 'status'>) => OrderRequest;
   updateOrderStatus: (id: string, status: OrderRequest['status'], notes?: string) => void;
   deleteOrder: (id: string) => void;
-  addTestOrder: () => OrderRequest;
-  refreshOrdersFromServer: () => Promise<void>;
+  
+  addReview: (review: Omit<ClientReview, 'id' | 'createdAt'>) => ClientReview;
+  approveReview: (id: string) => void;
+  deleteReview: (id: string) => void;
   
   updateSettings: (newSettings: Partial<SiteSettings>) => void;
   exportDatabaseJSON: () => string;
@@ -61,6 +62,7 @@ const STORAGE_KEYS = {
   DESIGNS: 'design_mahal_designs_v1',
   SERVICES: 'design_mahal_services_v1',
   ORDERS: 'design_mahal_orders_v1',
+  REVIEWS: 'design_mahal_reviews_v1',
   SETTINGS: 'design_mahal_settings_v1',
   ADMIN_USERS: 'design_mahal_admin_users_v1',
   CURRENT_ADMIN: 'design_mahal_current_admin_v1',
@@ -115,13 +117,55 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const saved = localStorage.getItem(STORAGE_KEYS.ORDERS);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          const dummyIds = ['ORD-892104', 'ORD-761920', 'ORD-654311'];
+          const realOrders = parsed.filter(
+            (o) =>
+              !dummyIds.includes(o.id) &&
+              o.clientName !== 'তানভীর আহমেদ' &&
+              o.clientName !== 'মাওলানা কামরুল হাসান' &&
+              o.clientName !== 'মাহমুদুল করিম'
+          );
+          return realOrders;
+        }
       }
       return INITIAL_ORDERS;
     } catch {
       return INITIAL_ORDERS;
     }
   });
+
+  const [reviews, setReviews] = useState<ClientReview[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.REVIEWS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const dummyReviewIds = ['rev-1', 'rev-2', 'rev-3', 'rev-4'];
+          const realReviews = parsed.filter(
+            (r) =>
+              !dummyReviewIds.includes(r.id) &&
+              r.clientName !== 'তানভীর আহমেদ' &&
+              r.clientName !== 'মো: হাসিবুর রহমান' &&
+              r.clientName !== 'নাদিম মাহমুদ' &&
+              r.clientName !== 'সাদিয়া তাসনিম'
+          );
+          return realReviews;
+        }
+      }
+      return INITIAL_REVIEWS;
+    } catch {
+      return INITIAL_REVIEWS;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(reviews));
+    } catch (e) {
+      console.warn('LocalStorage error saving reviews:', e);
+    }
+  }, [reviews]);
 
   const [settings, setSettings] = useState<SiteSettings>(() => {
     try {
@@ -181,7 +225,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Modal states
   const [activeDesignModal, setActiveDesignModal] = useState<DesignItem | null>(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
-  const [isOrderDashboardOpen, setIsOrderDashboardOpen] = useState(false);
   const [preselectedService, setPreselectedService] = useState('');
   const [prefilledReference, setPrefilledReference] = useState('');
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
@@ -252,6 +295,29 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       console.warn('LocalStorage error saving admin users:', e);
     }
   }, [adminUsers]);
+
+  // Secret URL access listener for owner (e.g. your-site.com/#admin or #dashboard)
+  // Ensures nobody else sees any button on the public website, only the owner with the secret link
+  useEffect(() => {
+    const checkSecretAdminAccess = () => {
+      const hash = (window.location.hash || '').toLowerCase();
+      const search = (window.location.search || '').toLowerCase();
+      if (
+        hash === '#admin' ||
+        hash === '#dashboard' ||
+        hash === '#control' ||
+        hash === '#panel' ||
+        search.includes('admin') ||
+        search.includes('dashboard')
+      ) {
+        setIsAdminModalOpen(true);
+      }
+    };
+
+    checkSecretAdminAccess();
+    window.addEventListener('hashchange', checkSecretAdminAccess);
+    return () => window.removeEventListener('hashchange', checkSecretAdminAccess);
+  }, []);
 
   // Login with Gmail & Password
   const loginWithGmail = (email: string, password: string, rememberMe = true): AdminAuthResult => {
@@ -595,14 +661,25 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Secret admin access triggers: URL query parameter (?admin) and keyboard shortcut (Ctrl+Shift+A)
+  // Secret owner-only access triggers: URL query/hash (?admin, #admin, ?dashboard) and keyboard shortcut (Ctrl+Shift+A)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    const checkSecretAccess = () => {
+      if (typeof window === 'undefined') return;
       const searchParams = new URLSearchParams(window.location.search);
-      if (searchParams.has('admin') || window.location.hash.toLowerCase().includes('admin')) {
+      const hash = window.location.hash.toLowerCase();
+      if (
+        searchParams.has('admin') ||
+        searchParams.has('dashboard') ||
+        hash.includes('admin') ||
+        hash.includes('dashboard')
+      ) {
         setIsAdminModalOpen(true);
       }
-    }
+    };
+
+    checkSecretAccess();
+    window.addEventListener('hashchange', checkSecretAccess);
+    window.addEventListener('popstate', checkSecretAccess);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
@@ -612,7 +689,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('hashchange', checkSecretAccess);
+      window.removeEventListener('popstate', checkSecretAccess);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   // Persistence to local storage
@@ -688,77 +769,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setServices((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // Audio notification chime when a new order is received
-  const playOrderNotificationChime = () => {
-    try {
-      if (typeof window === 'undefined') return;
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.45);
-    } catch {
-      // AudioContext may be restricted by browser until user gesture
-    }
-  };
-
-  const refreshOrdersFromServer = async () => {
-    try {
-      const res = await fetch('/api/orders');
-      if (res.ok) {
-        const data = await res.json();
-        const incomingOrders: OrderRequest[] = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.orders)
-          ? data.orders
-          : [];
-
-        if (incomingOrders.length > 0) {
-          setOrders((prev) => {
-            const prevIds = new Set(prev.map((o) => o.id));
-            const hasNewOrder = incomingOrders.some((o) => !prevIds.has(o.id));
-            if (hasNewOrder && prev.length > 0) {
-              playOrderNotificationChime();
-            }
-
-            const map = new Map<string, OrderRequest>();
-            // Server data is source of truth
-            incomingOrders.forEach((ord: OrderRequest) => map.set(ord.id, ord));
-            // Keep any locally created orders pending sync
-            prev.forEach((ord) => {
-              if (!map.has(ord.id)) map.set(ord.id, ord);
-            });
-            const merged = Array.from(map.values());
-            merged.sort(
-              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            );
-            return merged;
-          });
-        }
-      }
-    } catch {
-      // safe fallback to client state
-    }
-  };
-
-  // Real-time server sync polling: Poll every 5 seconds so orders from all devices show on dashboard
-  useEffect(() => {
-    refreshOrdersFromServer();
-    const interval = setInterval(() => {
-      refreshOrdersFromServer();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
   const createOrder = (orderData: Omit<OrderRequest, 'id' | 'createdAt' | 'status'>): OrderRequest => {
     const newOrder: OrderRequest = {
       ...orderData,
@@ -769,7 +779,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     setOrders((prev) => [newOrder, ...prev.filter((o) => o.id !== newOrder.id)]);
 
-    // Persist to local storage for immediate offline reliability
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.ORDERS);
       const parsed = saved ? JSON.parse(saved) : [];
@@ -778,19 +787,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         JSON.stringify([newOrder, ...parsed.filter((o: any) => o.id !== newOrder.id)])
       );
     } catch {}
-
-    // Persist to backend server so website dashboard sees orders placed by ANY visitor
-    fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newOrder),
-    })
-      .then((res) => {
-        if (res.ok) {
-          refreshOrdersFromServer();
-        }
-      })
-      .catch((err) => console.warn('Could not post order to server:', err));
 
     return newOrder;
   };
@@ -801,47 +797,33 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         ord.id === id ? { ...ord, status, ...(notes !== undefined ? { notes } : {}) } : ord
       )
     );
-    try {
-      fetch(`/api/orders/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, ...(notes !== undefined ? { notes } : {}) }),
-      }).catch(() => {});
-    } catch {}
   };
 
   const deleteOrder = (id: string) => {
     setOrders((prev) => prev.filter((ord) => ord.id !== id));
-    try {
-      fetch(`/api/orders/${id}`, { method: 'DELETE' }).catch(() => {});
-    } catch {}
   };
 
-  const addTestOrder = (): OrderRequest => {
-    const sampleServices = [
-      'প্রফেশনাল লোগো ডিজাইন',
-      'ইসলামিক পোষ্টার ডিজাইন',
-      'ব্যানার ও বিলবোর্ড ডিজাইন',
-      'সোশ্যাল মিডিয়া পোস্ট ডিজাইন',
-      'ব্র্যান্ডিং আইডেন্টিটি প্যাকেজ'
-    ];
-    const sampleClients = [
-      'মুহাম্মদ আরিফুল ইসলাম',
-      'মো: হাসিবুর রহমান (সিইও, স্কাইলাইন)',
-      'নাদিম মাহমুদ (মালিক, ফুড ভিলেজ)',
-      'রাকিবুল হাসান (নূর ফ্যাশন)'
-    ];
-    const randomService = sampleServices[Math.floor(Math.random() * sampleServices.length)];
-    const randomClient = sampleClients[Math.floor(Math.random() * sampleClients.length)];
-    return createOrder({
-      clientName: randomClient,
-      contactMethod: 'whatsapp',
-      contactValue: `+880 17${Math.floor(10000000 + Math.random() * 90000000)}`,
-      selectedService: randomService,
-      projectDetails: `${randomService} এর জন্য নতুন আর্জেন্ট অর্ডার। এইচডি প্রিন্ট কোয়ালিটি ও ভেক্টর ফাইল প্রয়োজন। ওয়েবসাইট ড্যাশবোর্ডে অর্ডার রিয়েলটাইমে দেখা যাচ্ছে।`,
-      preferredDeliveryDate: '২ দিনের মধ্যে',
-      notes: 'ওয়েবসাইট টেস্ট অর্ডার হিসেবে যুক্ত হয়েছে।',
-    });
+  const addReview = (reviewData: Omit<ClientReview, 'id' | 'createdAt'>): ClientReview => {
+    const newReview: ClientReview = {
+      ...reviewData,
+      id: `rev-${Date.now().toString().slice(-6)}`,
+      createdAt: new Date().toISOString(),
+      verified: true,
+      status: 'pending',
+    };
+
+    setReviews((prev) => [newReview, ...prev]);
+    return newReview;
+  };
+
+  const approveReview = (id: string) => {
+    setReviews((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: 'approved' } : r))
+    );
+  };
+
+  const deleteReview = (id: string) => {
+    setReviews((prev) => prev.filter((r) => r.id !== id));
   };
 
   const updateSettings = (newSettings: Partial<SiteSettings>) => {
@@ -856,6 +838,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       designs,
       services,
       orders,
+      reviews,
     };
     return JSON.stringify(exportObject, null, 2);
   };
@@ -867,6 +850,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (data.services && Array.isArray(data.services)) setServices(data.services);
       if (data.settings) setSettings((prev) => ({ ...prev, ...data.settings }));
       if (data.orders && Array.isArray(data.orders)) setOrders(data.orders);
+      if (data.reviews && Array.isArray(data.reviews)) setReviews(data.reviews);
       return true;
     } catch (err) {
       console.error('Import error:', err);
@@ -879,10 +863,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setServices(INITIAL_SERVICES);
     setSettings(INITIAL_SETTINGS);
     setOrders([]);
+    setReviews(INITIAL_REVIEWS);
     localStorage.removeItem(STORAGE_KEYS.DESIGNS);
     localStorage.removeItem(STORAGE_KEYS.SERVICES);
     localStorage.removeItem(STORAGE_KEYS.SETTINGS);
     localStorage.removeItem(STORAGE_KEYS.ORDERS);
+    localStorage.removeItem(STORAGE_KEYS.REVIEWS);
   };
 
   return (
@@ -891,6 +877,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         designs,
         services,
         orders,
+        reviews,
         settings,
         activeDesignModal,
         setActiveDesignModal,
@@ -918,8 +905,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         lockoutUntil,
         isGuideModalOpen,
         setIsGuideModalOpen,
-        isOrderDashboardOpen,
-        setIsOrderDashboardOpen,
         addDesign,
         updateDesign,
         deleteDesign,
@@ -929,8 +914,9 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         createOrder,
         updateOrderStatus,
         deleteOrder,
-        addTestOrder,
-        refreshOrdersFromServer,
+        addReview,
+        approveReview,
+        deleteReview,
         updateSettings,
         exportDatabaseJSON,
         importDatabaseJSON,
