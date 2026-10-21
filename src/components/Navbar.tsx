@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
-import { Menu, X, Shield, BookOpen, Sparkles, Send } from 'lucide-react';
+import { Menu, X, Shield, BookOpen, Sparkles, Send, Layers } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { settings, openOrderWithService, setIsAdminModalOpen, setIsGuideModalOpen, isAdminAuthenticated } = usePortfolio();
+  const {
+    settings,
+    openOrderWithService,
+    setIsAdminModalOpen,
+    setIsGuideModalOpen,
+    isAdminAuthenticated,
+    setIsOrderDashboardOpen,
+    orders,
+  } = usePortfolio();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const newOrdersCount = orders.filter((o) => o.status === 'নতুন (New)').length;
 
   const navLinks = [
     { label: 'হোম', href: '#home' },
@@ -74,6 +84,23 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
 
+              {/* Orders Dashboard Button */}
+              <div className="icon-underlight-glow">
+                <button
+                  onClick={() => setIsOrderDashboardOpen(true)}
+                  title="ক্লায়েন্টদের সমস্ত অর্ডার ড্যাশবোর্ড"
+                  className="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-[#1d4ed8] to-[#2563eb] hover:from-[#1e40af] hover:to-[#1d4ed8] border border-[#38bdf8]/50 shadow-md shadow-[#2563eb]/30 cursor-pointer"
+                >
+                  <Layers className="w-3.5 h-3.5 text-white" />
+                  <span className="hidden sm:inline">অর্ডার ড্যাশবোর্ড</span>
+                  {newOrdersCount > 0 && (
+                    <span className="ml-1 px-1.5 py-0.2 bg-amber-400 text-slate-950 font-black rounded-full text-[10px] animate-pulse">
+                      {newOrdersCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
               {/* Admin Manage Button */}
               <div className="icon-underlight-glow">
                 <button
@@ -130,27 +157,44 @@ export const Navbar: React.FC = () => {
 
           {/* ONLY SHOWN TO AUTHENTICATED ADMIN IN MOBILE */}
           {isAdminAuthenticated && (
-            <div className="pt-3 border-t border-[#162344] flex items-center gap-3">
+            <div className="pt-3 border-t border-[#162344] space-y-2">
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  setIsGuideModalOpen(true);
+                  setIsOrderDashboardOpen(true);
                 }}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold text-[#cbd5e1] bg-[#101932] border border-[#1e2f57] rounded-md"
+                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#1d4ed8] to-[#2563eb] border border-[#38bdf8]/50 rounded-lg shadow-sm"
               >
-                <BookOpen className="w-4 h-4 text-[#38bdf8]" />
-                নির্দেশিকা
+                <Layers className="w-4 h-4 text-white" />
+                <span>অর্ডার ড্যাশবোর্ড</span>
+                {newOrdersCount > 0 && (
+                  <span className="ml-1 px-1.5 py-0.2 bg-amber-400 text-slate-950 font-black rounded-full text-[10px]">
+                    {newOrdersCount} নতুন
+                  </span>
+                )}
               </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setIsAdminModalOpen(true);
-                }}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold text-[#38bdf8] bg-[#162345] border border-[#38bdf8]/40 rounded-md"
-              >
-                <Shield className="w-4 h-4 text-[#38bdf8]" />
-                কন্ট্রোল প্যানেল
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsGuideModalOpen(true);
+                  }}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-[#cbd5e1] bg-[#101932] border border-[#1e2f57] rounded-md"
+                >
+                  <BookOpen className="w-3.5 h-3.5 text-[#38bdf8]" />
+                  নির্দেশিকা
+                </button>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsAdminModalOpen(true);
+                  }}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-[#38bdf8] bg-[#162345] border border-[#38bdf8]/40 rounded-md"
+                >
+                  <Shield className="w-3.5 h-3.5 text-[#38bdf8]" />
+                  কন্ট্রোল প্যানেল
+                </button>
+              </div>
             </div>
           )}
         </div>

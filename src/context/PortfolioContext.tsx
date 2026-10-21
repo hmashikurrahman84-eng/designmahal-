@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AdminAuthResult, AdminUser, DesignItem, ServiceItem, OrderRequest, SiteSettings } from '../types';
-import { INITIAL_ADMIN_USERS, INITIAL_DESIGNS, INITIAL_SERVICES, INITIAL_SETTINGS } from '../data/initialData';
+import { INITIAL_ADMIN_USERS, INITIAL_DESIGNS, INITIAL_ORDERS, INITIAL_SERVICES, INITIAL_SETTINGS } from '../data/initialData';
 
 interface PortfolioContextType {
   designs: DesignItem[];
@@ -33,6 +33,8 @@ interface PortfolioContextType {
   lockoutUntil: number | null;
   isGuideModalOpen: boolean;
   setIsGuideModalOpen: (open: boolean) => void;
+  isOrderDashboardOpen: boolean;
+  setIsOrderDashboardOpen: (open: boolean) => void;
   
   // Actions
   addDesign: (design: Omit<DesignItem, 'id'>) => DesignItem;
@@ -44,8 +46,10 @@ interface PortfolioContextType {
   deleteService: (id: string) => void;
   
   createOrder: (orderData: Omit<OrderRequest, 'id' | 'createdAt' | 'status'>) => OrderRequest;
-  updateOrderStatus: (id: string, status: OrderRequest['status']) => void;
+  updateOrderStatus: (id: string, status: OrderRequest['status'], notes?: string) => void;
   deleteOrder: (id: string) => void;
+  addTestOrder: () => OrderRequest;
+  refreshOrdersFromServer: () => Promise<void>;
   
   updateSettings: (newSettings: Partial<SiteSettings>) => void;
   exportDatabaseJSON: () => string;
@@ -109,9 +113,13 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [orders, setOrders] = useState<OrderRequest[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.ORDERS);
-      return saved ? JSON.parse(saved) : [];
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return INITIAL_ORDERS;
     } catch {
-      return [];
+      return INITIAL_ORDERS;
     }
   });
 
@@ -173,6 +181,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Modal states
   const [activeDesignModal, setActiveDesignModal] = useState<DesignItem | null>(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [isOrderDashboardOpen, setIsOrderDashboardOpen] = useState(false);
   const [preselectedService, setPreselectedService] = useState('');
   const [prefilledReference, setPrefilledReference] = useState('');
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
@@ -261,7 +270,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return { success: false, error: 'দয়া করে আপনার জিমেল এড্রেস দিন।' };
     }
     if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      return { success: false, error: 'সঠিক ফরম্যাটের জিমেল এড্রেস দিন (যেমন: hmashikurrahman84@gmail.com)।' };
+      return { success: false, error: 'সঠিক ফরম্যাটের জিমেল এড্রেস দিন (যেমন: admin@gmail.com)।' };
     }
     if (!password) {
       return { success: false, error: 'দয়া করে আপনার অ্যাডমিন পাসওয়ার্ড দিন।' };
@@ -381,7 +390,7 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return { success: false, error: 'দয়া করে আপনার পূর্ণ নাম লিখুন (কমপক্ষে ২ অক্ষর)।' };
     }
     if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      return { success: false, error: 'সঠিক জিমেল এড্রেস দিন (যেমন: hmashikurrahman84@gmail.com)।' };
+      return { success: false, error: 'সঠিক জিমেল এড্রেস দিন (যেমন: admin@gmail.com)।' };
     }
     if (!password || password.length < 6) {
       return { success: false, error: 'পাসওয়ার্ড শক্তিশালী ও কমপক্ষে ৬ অক্ষরের হতে হবে।' };
@@ -679,6 +688,77 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setServices((prev) => prev.filter((item) => item.id !== id));
   };
 
+  // Audio notification chime when a new order is received
+  const playOrderNotificationChime = () => {
+    try {
+      if (typeof window === 'undefined') return;
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.45);
+    } catch {
+      // AudioContext may be restricted by browser until user gesture
+    }
+  };
+
+  const refreshOrdersFromServer = async () => {
+    try {
+      const res = await fetch('/api/orders');
+      if (res.ok) {
+        const data = await res.json();
+        const incomingOrders: OrderRequest[] = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.orders)
+          ? data.orders
+          : [];
+
+        if (incomingOrders.length > 0) {
+          setOrders((prev) => {
+            const prevIds = new Set(prev.map((o) => o.id));
+            const hasNewOrder = incomingOrders.some((o) => !prevIds.has(o.id));
+            if (hasNewOrder && prev.length > 0) {
+              playOrderNotificationChime();
+            }
+
+            const map = new Map<string, OrderRequest>();
+            // Server data is source of truth
+            incomingOrders.forEach((ord: OrderRequest) => map.set(ord.id, ord));
+            // Keep any locally created orders pending sync
+            prev.forEach((ord) => {
+              if (!map.has(ord.id)) map.set(ord.id, ord);
+            });
+            const merged = Array.from(map.values());
+            merged.sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            return merged;
+          });
+        }
+      }
+    } catch {
+      // safe fallback to client state
+    }
+  };
+
+  // Real-time server sync polling: Poll every 5 seconds so orders from all devices show on dashboard
+  useEffect(() => {
+    refreshOrdersFromServer();
+    const interval = setInterval(() => {
+      refreshOrdersFromServer();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   const createOrder = (orderData: Omit<OrderRequest, 'id' | 'createdAt' | 'status'>): OrderRequest => {
     const newOrder: OrderRequest = {
       ...orderData,
@@ -686,16 +766,82 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       createdAt: new Date().toISOString(),
       status: 'নতুন (New)',
     };
-    setOrders((prev) => [newOrder, ...prev]);
+
+    setOrders((prev) => [newOrder, ...prev.filter((o) => o.id !== newOrder.id)]);
+
+    // Persist to local storage for immediate offline reliability
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.ORDERS);
+      const parsed = saved ? JSON.parse(saved) : [];
+      localStorage.setItem(
+        STORAGE_KEYS.ORDERS,
+        JSON.stringify([newOrder, ...parsed.filter((o: any) => o.id !== newOrder.id)])
+      );
+    } catch {}
+
+    // Persist to backend server so website dashboard sees orders placed by ANY visitor
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newOrder),
+    })
+      .then((res) => {
+        if (res.ok) {
+          refreshOrdersFromServer();
+        }
+      })
+      .catch((err) => console.warn('Could not post order to server:', err));
+
     return newOrder;
   };
 
-  const updateOrderStatus = (id: string, status: OrderRequest['status']) => {
-    setOrders((prev) => prev.map((ord) => (ord.id === id ? { ...ord, status } : ord)));
+  const updateOrderStatus = (id: string, status: OrderRequest['status'], notes?: string) => {
+    setOrders((prev) =>
+      prev.map((ord) =>
+        ord.id === id ? { ...ord, status, ...(notes !== undefined ? { notes } : {}) } : ord
+      )
+    );
+    try {
+      fetch(`/api/orders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, ...(notes !== undefined ? { notes } : {}) }),
+      }).catch(() => {});
+    } catch {}
   };
 
   const deleteOrder = (id: string) => {
     setOrders((prev) => prev.filter((ord) => ord.id !== id));
+    try {
+      fetch(`/api/orders/${id}`, { method: 'DELETE' }).catch(() => {});
+    } catch {}
+  };
+
+  const addTestOrder = (): OrderRequest => {
+    const sampleServices = [
+      'প্রফেশনাল লোগো ডিজাইন',
+      'ইসলামিক পোষ্টার ডিজাইন',
+      'ব্যানার ও বিলবোর্ড ডিজাইন',
+      'সোশ্যাল মিডিয়া পোস্ট ডিজাইন',
+      'ব্র্যান্ডিং আইডেন্টিটি প্যাকেজ'
+    ];
+    const sampleClients = [
+      'মুহাম্মদ আরিফুল ইসলাম',
+      'মো: হাসিবুর রহমান (সিইও, স্কাইলাইন)',
+      'নাদিম মাহমুদ (মালিক, ফুড ভিলেজ)',
+      'রাকিবুল হাসান (নূর ফ্যাশন)'
+    ];
+    const randomService = sampleServices[Math.floor(Math.random() * sampleServices.length)];
+    const randomClient = sampleClients[Math.floor(Math.random() * sampleClients.length)];
+    return createOrder({
+      clientName: randomClient,
+      contactMethod: 'whatsapp',
+      contactValue: `+880 17${Math.floor(10000000 + Math.random() * 90000000)}`,
+      selectedService: randomService,
+      projectDetails: `${randomService} এর জন্য নতুন আর্জেন্ট অর্ডার। এইচডি প্রিন্ট কোয়ালিটি ও ভেক্টর ফাইল প্রয়োজন। ওয়েবসাইট ড্যাশবোর্ডে অর্ডার রিয়েলটাইমে দেখা যাচ্ছে।`,
+      preferredDeliveryDate: '২ দিনের মধ্যে',
+      notes: 'ওয়েবসাইট টেস্ট অর্ডার হিসেবে যুক্ত হয়েছে।',
+    });
   };
 
   const updateSettings = (newSettings: Partial<SiteSettings>) => {
@@ -772,6 +918,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         lockoutUntil,
         isGuideModalOpen,
         setIsGuideModalOpen,
+        isOrderDashboardOpen,
+        setIsOrderDashboardOpen,
         addDesign,
         updateDesign,
         deleteDesign,
@@ -781,6 +929,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         createOrder,
         updateOrderStatus,
         deleteOrder,
+        addTestOrder,
+        refreshOrdersFromServer,
         updateSettings,
         exportDatabaseJSON,
         importDatabaseJSON,

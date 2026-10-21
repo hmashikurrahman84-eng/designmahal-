@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { DesignCategory, DesignItem } from '../types';
 import { VectorShowcase } from './VectorShowcase';
+import { OrdersDashboard } from './OrdersDashboard';
 import {
   Shield,
   X,
@@ -104,6 +105,7 @@ export const AdminModal: React.FC = () => {
   const [recoveryConfirm, setRecoveryConfirm] = useState('');
   const [showRecoveryPassword, setShowRecoveryPassword] = useState(false);
   const [showWhitelistEmails, setShowWhitelistEmails] = useState(false);
+  const [showSettingsEmail, setShowSettingsEmail] = useState(false);
 
   // Auth feedback & loading
   const [authError, setAuthError] = useState<string | null>(null);
@@ -1357,101 +1359,10 @@ export const AdminModal: React.FC = () => {
                 </div>
               )}
 
-              {/* TAB 3: ORDERS INBOX */}
+              {/* TAB 3: ORDERS INBOX & FULL DASHBOARD */}
               {activeTab === 'orders' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-bold text-[#f1f5f9]">
-                      প্রাপ্ত ক্লায়েন্ট অর্ডার ইনবক্স ({orders.length})
-                    </h4>
-                  </div>
-
-                  {orders.length === 0 ? (
-                    <div className="text-center py-12 rounded-xl bg-[#0e162c] border border-[#1b2a4e] text-xs text-[#8f96a8]">
-                      এখনো কোনো অর্ডার আসেনি। ক্লায়েন্টরা অর্ডার ফর্ম পূরণ করলে এখানে সংরক্ষিত হবে।
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {orders.map((ord) => (
-                        <div key={ord.id} className="p-4 rounded-xl bg-[#0e162c] border border-[#1b2a4e] space-y-3">
-                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#172343] pb-2.5">
-                            <div>
-                              <span className="font-mono text-xs font-bold text-[#38bdf8]">#{ord.id}</span>
-                              <span className="text-xs text-[#a0a8ba] ml-2">({new Date(ord.createdAt).toLocaleDateString('bn-BD')})</span>
-                            </div>
-
-                            {/* Status Selector */}
-                            <div className="flex items-center gap-2">
-                              <span className="text-[11px] text-[#8e95a7]">অবস্থা:</span>
-                              <select
-                                value={ord.status}
-                                onChange={(e) => updateOrderStatus(ord.id, e.target.value as any)}
-                                className="px-2 py-1 bg-[#121c38] border border-[#1e2f57] text-[11px] text-[#f1f5f9] rounded outline-none"
-                              >
-                                <option value="নতুন (New)">নতুন (New)</option>
-                                <option value="কাজ চলছে (In Progress)">কাজ চলছে (In Progress)</option>
-                                <option value="সম্পন্ন (Completed)">সম্পন্ন (Completed)</option>
-                                <option value="বাতিল (Cancelled)">বাতিল (Cancelled)</option>
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                            <div>
-                              <div className="text-[11px] text-[#7b8394] uppercase">ক্লায়েন্টের নাম:</div>
-                              <div className="font-bold text-[#f1f5f9]">{ord.clientName}</div>
-                            </div>
-                            <div>
-                              <div className="text-[11px] text-[#7b8394] uppercase">যোগাযোগ ({ord.contactMethod}):</div>
-                              <div className="font-mono text-[#38bdf8]">{ord.contactValue}</div>
-                            </div>
-                            <div>
-                              <div className="text-[11px] text-[#7b8394] uppercase">সার্ভিস ও তারিখ:</div>
-                              <div className="text-[#f1f5f9]">{ord.selectedService} ({ord.preferredDeliveryDate})</div>
-                            </div>
-                          </div>
-
-                          <div className="p-2.5 rounded bg-[#080d1a] border border-[#1e2f57] text-xs text-[#cbd5e1] whitespace-pre-wrap">
-                            {ord.projectDetails}
-                          </div>
-
-                          {/* Reference files */}
-                          {ord.referenceFiles && ord.referenceFiles.length > 0 && (
-                            <div className="flex items-center gap-2 pt-1">
-                              <span className="text-[11px] text-[#7b8394]">রেফারেন্স ছবি:</span>
-                              {ord.referenceFiles.map((file, i) => (
-                                <img key={i} src={file} alt="Ref" className="w-10 h-10 object-cover rounded border border-[#243764]" />
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Reply on WhatsApp CTA */}
-                          <div className="pt-2 flex items-center justify-between">
-                            <a
-                              href={`https://wa.me/${ord.contactValue.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-                                `আসসালামু আলাইকুম ${ord.clientName}, Design Mahal থেকে যোগাযোগ করছি আপনার #${ord.id} নম্বর গ্রাফিক ডিজাইন অর্ডারের ব্যাপারে।`
-                              )}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#080d1a] bg-[#25D366] hover:bg-[#20ba5a] rounded-md transition-colors"
-                            >
-                              <MessageSquare className="w-3.5 h-3.5" />
-                              <span>ক্লায়েন্টকে WhatsApp-এ রিপ্লাই দিন</span>
-                            </a>
-
-                            <button
-                              onClick={() => {
-                                if (confirm('অর্ডারটি মুছে ফেলতে চান?')) deleteOrder(ord.id);
-                              }}
-                              className="text-xs text-[#7d8597] hover:text-red-400"
-                            >
-                              অর্ডার মুছুন
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                <div className="pt-2">
+                  <OrdersDashboard />
                 </div>
               )}
 
@@ -1601,14 +1512,24 @@ export const AdminModal: React.FC = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-[#cbd5e1] uppercase tracking-wider mb-1">
-                          অফিসিয়াল ইমেইল
-                        </label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-semibold text-[#cbd5e1] uppercase tracking-wider">
+                            অফিসিয়াল ইমেইল
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setShowSettingsEmail(!showSettingsEmail)}
+                            className="text-[10px] text-[#38bdf8] hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            {showSettingsEmail ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            <span>{showSettingsEmail ? 'লুকান' : 'দেখুন'}</span>
+                          </button>
+                        </div>
                         <input
-                          type="email"
+                          type={showSettingsEmail ? 'email' : 'password'}
                           value={siteSettingsForm.email}
                           onChange={(e) => setSiteSettingsForm({ ...siteSettingsForm, email: e.target.value })}
-                          className="w-full px-3 py-2 bg-[#080d1a] border border-[#1e2f57] text-xs text-[#f1f5f9] rounded outline-none"
+                          className="w-full px-3 py-2 bg-[#080d1a] border border-[#1e2f57] text-xs text-[#f1f5f9] rounded outline-none font-mono"
                         />
                       </div>
 
@@ -1766,7 +1687,7 @@ export const AdminModal: React.FC = () => {
                         <input
                           type={showWhitelistEmails ? 'text' : 'password'}
                           placeholder="অনুমোদিত জিমেলসমূহ এনক্রিপ্ট রাখা আছে..."
-                          value={(siteSettingsForm.authorizedAdminEmails || ['hmashikurrahman84@gmail.com']).join(', ')}
+                          value={(siteSettingsForm.authorizedAdminEmails || []).join(', ')}
                           onChange={(e) => {
                             const arr = e.target.value.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
                             setSiteSettingsForm({ ...siteSettingsForm, authorizedAdminEmails: arr });

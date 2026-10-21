@@ -18,6 +18,14 @@ import { OrderModal } from './components/OrderModal';
 import { AdminModal } from './components/AdminModal';
 import { DeploymentGuideModal } from './components/DeploymentGuideModal';
 import { FloatingWhatsApp } from './components/FloatingWhatsApp';
+import { OrdersDashboard } from './components/OrdersDashboard';
+import { usePortfolio } from './context/PortfolioContext';
+
+const GlobalOrdersDashboardModal: React.FC = () => {
+  const { isOrderDashboardOpen, setIsOrderDashboardOpen } = usePortfolio();
+  if (!isOrderDashboardOpen) return null;
+  return <OrdersDashboard isModal onClose={() => setIsOrderDashboardOpen(false)} />;
+};
 
 export default function App() {
   return (
@@ -47,6 +55,7 @@ export default function App() {
         <OrderModal />
         <AdminModal />
         <DeploymentGuideModal />
+        <GlobalOrdersDashboardModal />
       </div>
     </PortfolioProvider>
   );
